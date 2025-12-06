@@ -1,0 +1,33 @@
+[
+  {
+    "id": "q_aqi_today",
+    "questions": ["what is aqi today", "current aqi", "aqi now", "today's air quality"],
+    "answer": "Current AQI is {{aqi}}. If AQI > 150 avoid long outdoor activity and wear an N95 mask."
+  },
+  {
+    "id": "q_what_is_aqi",
+    "questions": ["what is aqi", "what does aqi mean", "explain aqi"],
+    "answer": "AQI is Air Quality Index — a number showing how clean or polluted the air is."
+  },
+  {
+    "id": "q_mask",
+    "questions": ["should i wear mask", "mask today", "do i need a mask"],
+    "answer": "If AQI is Unhealthy or worse, wear an N95/FFP2 mask outdoors and avoid exercise outside."
+  },
+  {
+    "id": "q_for_asthma",
+    "questions": ["i have asthma can i go out", "asthma and aqi", "is it safe for asthma"],
+    "answer": "If AQI is high, avoid outdoor exposure. Carry your inhaler and prefer indoor activities."
+  },
+  {
+    "id": "q_sources",
+    "questions": ["why is delhi polluted", "causes of pollution", "why so much smog"],
+    "answer": "Main causes: vehicle emissions, dust, industries, and crop stubble burning (seasonal)."
+  },
+  {
+    "id": "q_fallback",
+    "questions": [],
+    "answer": "Sorry, I don't have an answer for that. Try simpler words or ask about AQI, masks, or health tips."
+  }
+]
+

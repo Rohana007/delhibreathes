@@ -1,0 +1,873 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   PREMIUM ENTERPRISE LIGHT THEME
+   Clean, Professional, No Gradients
+   ============================================ */
+
+:root {
+  /* Primary Colors */
+  --primary-blue: #2563EB;
+  --primary-green: #16A34A;
+  --primary-red: #DC2626;
+  --primary-orange: #F97316;
+  --primary-purple: #7C3AED;
+  --primary-dark-red: #B91C1C;
+  
+  /* Neutral Colors */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-subtle: #64748B;
+  --card-bg: #FFFFFF;
+  --page-bg: #FFFFFF;
+  --border-color: #E2E8F0;
+  --divider-color: #E5E7EB;
+  --icon-default: #334155;
+  
+  /* AQI Colors - CPCB Standard */
+  --aqi-good: #00B050;
+  --aqi-satisfactory: #92D050;
+  --aqi-moderate: #FFC107;
+  --aqi-poor: #FF9900;
+  --aqi-very-poor: #DC2626;
+  --aqi-severe: #7E0023;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+  
+  /* Card Style */
+  --card-radius: 14px;
+  --card-padding: 20px;
+}
+
+/* Base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--page-bg);
+    min-height: 100vh;
+  }
+
+  /* Force white background */
+  body {
+    background: #FFFFFF !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--page-bg);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-subtle);
+  }
+  
+  /* Hide scrollbar for feature navigation */
+  .feature-scroll-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .feature-scroll-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Universal Card Style */
+  .glass-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+  
+  .glass-card:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  }
+
+  /* AQI Card */
+  .aqi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+  }
+
+  /* Region Card */
+  .region-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+  }
+
+  /* Alert Card */
+  .alert-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+  }
+
+  /* AQI Badge/Tag System */
+  .aqi-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  
+  .aqi-good {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.25);
+    color: var(--aqi-good);
+  }
+  
+  .aqi-satisfactory {
+    background: rgba(101, 163, 13, 0.08);
+    border-color: rgba(101, 163, 13, 0.25);
+    color: var(--aqi-satisfactory);
+  }
+  
+  .aqi-moderate {
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.25);
+    color: var(--aqi-moderate);
+  }
+  
+  .aqi-poor {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.25);
+    color: var(--aqi-poor);
+  }
+  
+  .aqi-veryPoor {
+    background: rgba(124, 58, 237, 0.08);
+    border-color: rgba(124, 58, 237, 0.25);
+    color: var(--aqi-very-poor);
+  }
+  
+  .aqi-severe {
+    background: rgba(185, 28, 28, 0.08);
+    border-color: rgba(185, 28, 28, 0.25);
+    color: var(--aqi-severe);
+  }
+
+  /* AQI Number Style */
+  .aqi-value {
+    font-size: 58px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .btn-primary:hover {
+    background: #1D4ED8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+  
+  .btn-danger {
+    background: var(--primary-red);
+    color: #FFFFFF;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .btn-danger:hover {
+    background: #B91C1C;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  }
+  
+  .btn-ghost {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-ghost:hover {
+    background: #F1F5F9;
+    border-color: var(--text-subtle);
+  }
+
+  .btn-secondary {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary:hover {
+    background: #F1F5F9;
+    border-color: var(--text-subtle);
+  }
+
+  /* Chips/Filters */
+  .chip {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .chip.active {
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    border-color: var(--primary-blue);
+  }
+
+  /* Input Fields */
+  .input-field {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+  }
+  
+  .input-field::placeholder {
+    color: var(--text-subtle);
+  }
+  
+  .input-field:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  /* Stats */
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .stat-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    font-weight: 500;
+  }
+
+  /* Section Title */
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Alert Banners */
+  .alert-banner {
+    padding: 1rem;
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: var(--card-bg);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+  }
+  
+  .alert-critical {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.25);
+    color: var(--primary-red);
+  }
+  
+  .alert-warning {
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.25);
+    color: var(--primary-orange);
+  }
+  
+  .alert-info {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.25);
+    color: var(--primary-blue);
+  }
+  
+  .alert-success {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.25);
+    color: var(--primary-green);
+  }
+
+  /* Trend Colors */
+  .trend-up {
+    color: var(--primary-red);
+  }
+  
+  .trend-down {
+    color: var(--primary-green);
+  }
+
+  /* Skeleton Loader */
+  .skeleton {
+    border-radius: 0.5rem;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background: var(--border-color);
+  }
+}
+
+/* Maps - Force White/Light Theme */
+.leaflet-container {
+  border-radius: 1rem;
+  background: #ffffff !important;
+  font-family: inherit;
+  color: var(--text-primary) !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--card-bg) !important;
+}
+
+.leaflet-popup-content {
+  margin: 14px 18px;
+  color: var(--text-primary) !important;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #F1F5F9 !important;
+}
+
+.leaflet-control-attribution {
+  background: var(--card-bg) !important;
+  color: var(--text-secondary) !important;
+  font-size: 10px;
+}
+
+/* Recharts - Light Theme */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border-color);
+}
+
+.recharts-text {
+  fill: var(--text-primary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.recharts-default-tooltip {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--text-primary) !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+/* Refresh Icon Styles */
+.refresh-icon {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.refresh-icon:hover {
+  transform: rotate(90deg);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Global Overrides - Remove all gradients and pastel backgrounds */
+* {
+  background-image: none !important;
+}
+
+/* Force white backgrounds */
+.bg-gradient-to-br,
+.bg-gradient-to-r,
+.bg-gradient-to-l,
+.bg-gradient-to-t {
+  background: var(--card-bg) !important;
+}
+
+/* Text color overrides */
+.text-gray-100,
+.text-gray-200,
+.text-gray-300 {
+  color: var(--text-primary) !important;
+}
+
+.text-gray-400,
+.text-gray-500 {
+  color: var(--text-secondary) !important;
+}
+
+.text-gray-600,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+/* Background overrides - force white */
+.bg-gray-50,
+.bg-gray-100,
+.bg-gray-200,
+.bg-gray-300,
+.bg-gray-400,
+.bg-gray-500,
+.bg-gray-600,
+.bg-gray-700,
+.bg-gray-800,
+.bg-gray-900,
+.bg-dark-700,
+.bg-dark-800 {
+  background: var(--card-bg) !important;
+}
+
+.bg-white\/5,
+.bg-white\/10,
+.bg-white\/20 {
+  background: var(--card-bg) !important;
+}
+
+/* Navbar active state */
+.nav-icon.active {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-blue);
+}
+
+.nav-icon svg {
+  fill: var(--icon-default) !important;
+  stroke: var(--icon-default) !important;
+  color: var(--icon-default) !important;
+}
+
+.nav-icon.active svg {
+  fill: var(--primary-blue) !important;
+  stroke: var(--primary-blue) !important;
+  color: var(--primary-blue) !important;
+}
+
+/* ============================================
+   GTranslate Widget Styles
+   Floating language switcher - bottom-right
+   ============================================ */
+
+.gtranslate_wrapper {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  font-family: inherit !important;
+  display: none; /* hidden until user clicks the language icon */
+}
+
+/* Shown when user clicks the language icon */
+.gtranslate_wrapper.is-open {
+  display: block;
+}
+
+/* Ensure widget doesn't block UI elements */
+.gtranslate_wrapper * {
+  box-sizing: border-box !important;
+}
+
+/* Brief highlight when triggered from dropdown icon */
+.gtranslate_wrapper.gtranslate-highlight {
+  transform: scale(1.03);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Floating dropdown icon that links to the widget */
+.language-toggle-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 22px;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: none;
+  background: linear-gradient(135deg, #1d4ed8, #22c55e);
+  color: #ffffff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.language-toggle-btn:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.45);
+}
+
+.language-toggle-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.3);
+}
+
+.language-toggle-btn:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gtranslate_wrapper {
+    bottom: 16px !important;
+    right: 16px !important;
+  }
+
+  .language-toggle-btn {
+    bottom: 76px;
+    right: 18px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+}
+
+
+/* RTL support for Urdu when GTranslate switches direction */
+body[dir="rtl"] * {
+  direction: rtl;
+  text-align: right;
+}
+
+
+/* ============================================
+   GAMIFICATION STYLES
+   ============================================ */
+
+/* GP Chip */
+.gp-chip {
+  background: #e6f8ed;
+  border: 1px solid #c7ebd8;
+  color: #009769;
+  padding: 6px 12px;
+  border-radius: 16px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.gp-chip:hover {
+  background: #d1f2e0;
+  border-color: #a8e6c8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 151, 105, 0.15);
+}
+
+.gp-icon {
+  font-size: 1rem;
+}
+
+.gp-value {
+  font-weight: 700;
+  color: #009769;
+}
+
+.gp-level {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Profile Dropdown Animation */
+.profile-dropdown {
+  animation: slideDown 0.25s ease forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide Alert Animation */
+@keyframes slideDownFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideDown {
+  animation: slideDownFromTop 0.4s ease-out forwards;
+}
+
+/* Badge and Reward Cards */
+.badge-card,
+.reward-card {
+  transition: all 0.25s ease;
+}
+
+.badge-icon:hover,
+.badge-card:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px #78e4a1);
+  transition: all 0.25s;
+}
+
+.reward-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Badge Glow Animation */
+@keyframes badgeGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+  }
+}
+
+.badge-card.newly-unlocked {
+  animation: badgeGlow 2s ease-in-out infinite;
+}
+
+/* GP Row Styles */
+.gp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.gp-label {
+  font-size: 0.875rem;
+  color: var(--text-subtle);
+}
+
+.gp-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #009769;
+}
+
+.level-row {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+}
+
+.badges-row,
+.rewards-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.badge-icon,
+.reward-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: all 0.25s ease;
+}
+
+.badge-icon:hover,
+.reward-icon:hover {
+  transform: scale(1.15);
+}
+
+/* ============================================
+   REFRESH BUTTON STYLES
+   ============================================ */
+.refresh-btn {
+  border: none;
+  background: transparent;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-btn svg {
+  color: #000 !important;
+}
+
+.refresh-btn:hover {
+  background: #f3f3f3;
+  border-radius: 6px;
+}
+
+/* ============================================
+   LANGUAGE SWITCHER STYLES
+   ============================================ */
+.lang-switcher {
+  position: relative;
+}
+
+.lang-switcher button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #000 !important;
+  border: 1px solid #ddd;
+  padding: 6px 10px;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.lang-switcher button svg {
+  color: #000 !important;
+}
+
+.lang-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 150px;
+  z-index: 9999;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+.lang-option {
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #000;
+}
+
+.lang-option:hover {
+  background: #f3f3f3;
+}

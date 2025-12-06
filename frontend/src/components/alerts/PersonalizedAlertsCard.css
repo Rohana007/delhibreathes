@@ -1,0 +1,135 @@
+/* Alerts ON State Styles */
+.alerts-on-card {
+  background: #e8f9f1;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alerts-on-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.green-dot {
+  width: 10px;
+  height: 10px;
+  background: #00a060;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.on-text {
+  color: #0F172A;
+  font-size: 14px;
+}
+
+.badge-personalized {
+  background: #d5f3e5;
+  color: #007c4a;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  margin-left: auto;
+  font-weight: 600;
+}
+
+.alert-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alert-details p {
+  margin: 0;
+  font-size: 14px;
+  color: #1D1D1D;
+  line-height: 1.5;
+}
+
+.alert-details p strong {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+.subtext {
+  font-size: 12px;
+  opacity: 0.8;
+  color: #64748B;
+  margin-top: 4px;
+}
+
+.manage-btn {
+  background: #009769;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  width: fit-content;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.manage-btn:hover {
+  background: #007e56;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 151, 105, 0.3);
+}
+
+.manage-btn:active {
+  transform: translateY(0);
+}
+
+.manage-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.disable-btn {
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #DC2626;
+  border-radius: 8px;
+  padding: 8px 14px;
+  width: fit-content;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.disable-btn:hover {
+  background: #DC2626;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.disable-btn:active {
+  transform: translateY(0);
+}
+
+.disable-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.disable-btn svg {
+  width: 16px;
+  height: 16px;
+}
+

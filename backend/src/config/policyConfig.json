@@ -1,0 +1,341 @@
+{
+  "cities": ["Delhi", "Gurugram", "Noida", "Ghaziabad", "Faridabad"],
+  "zones": ["North", "South", "East", "West", "Central"],
+  "policies": [
+    {
+      "id": "odd-even-vehicle-rule",
+      "name": "Odd–Even Vehicle Rule",
+      "description": "Restrict vehicles based on odd/even license plates to reduce traffic congestion and emissions",
+      "impacts": {
+        "PM2.5": -18,
+        "NO2": -22,
+        "CO": -10
+      }
+    },
+    {
+      "id": "industrial-shutdown",
+      "name": "Industrial Shutdown",
+      "description": "Temporary closure of polluting industrial units",
+      "impacts": {
+        "NO2": -35,
+        "SO2": -40,
+        "CO": -18
+      }
+    },
+    {
+      "id": "construction-ban",
+      "name": "Construction Ban",
+      "description": "Temporary halt on all construction and demolition activities",
+      "impacts": {
+        "PM10": -35,
+        "PM2.5": -15
+      }
+    },
+    {
+      "id": "traffic-diversion-plan",
+      "name": "Traffic Diversion Plan",
+      "description": "Redirect heavy traffic away from pollution-sensitive areas",
+      "impacts": {
+        "PM2.5": -12,
+        "NO2": -15,
+        "CO": -12
+      }
+    },
+    {
+      "id": "stubble-burning-control",
+      "name": "Stubble Burning Control",
+      "description": "Strict enforcement against agricultural stubble burning",
+      "impacts": {
+        "PM2.5": -28,
+        "PM10": -20
+      }
+    }
+  ],
+  "cityZones": {
+    "Delhi": {
+      "North": {
+        "baselineAQI": 290,
+        "baselinePollutants": {
+          "PM2.5": 125,
+          "PM10": 190,
+          "NO2": 70,
+          "CO": 8.5,
+          "SO2": 38,
+          "O3": 45
+        }
+      },
+      "South": {
+        "baselineAQI": 255,
+        "baselinePollutants": {
+          "PM2.5": 110,
+          "PM10": 165,
+          "NO2": 58,
+          "CO": 7,
+          "SO2": 30,
+          "O3": 40
+        }
+      },
+      "East": {
+        "baselineAQI": 280,
+        "baselinePollutants": {
+          "PM2.5": 120,
+          "PM10": 180,
+          "NO2": 65,
+          "CO": 8,
+          "SO2": 35,
+          "O3": 42
+        }
+      },
+      "West": {
+        "baselineAQI": 265,
+        "baselinePollutants": {
+          "PM2.5": 115,
+          "PM10": 170,
+          "NO2": 60,
+          "CO": 7.5,
+          "SO2": 32,
+          "O3": 41
+        }
+      },
+      "Central": {
+        "baselineAQI": 300,
+        "baselinePollutants": {
+          "PM2.5": 130,
+          "PM10": 200,
+          "NO2": 75,
+          "CO": 9,
+          "SO2": 40,
+          "O3": 50
+        }
+      }
+    },
+    "Gurugram": {
+      "North": {
+        "baselineAQI": 275,
+        "baselinePollutants": {
+          "PM2.5": 118,
+          "PM10": 175,
+          "NO2": 62,
+          "CO": 7.8,
+          "SO2": 33,
+          "O3": 43
+        }
+      },
+      "South": {
+        "baselineAQI": 250,
+        "baselinePollutants": {
+          "PM2.5": 105,
+          "PM10": 160,
+          "NO2": 55,
+          "CO": 6.8,
+          "SO2": 28,
+          "O3": 38
+        }
+      },
+      "East": {
+        "baselineAQI": 270,
+        "baselinePollutants": {
+          "PM2.5": 115,
+          "PM10": 175,
+          "NO2": 60,
+          "CO": 7.5,
+          "SO2": 32,
+          "O3": 40
+        }
+      },
+      "West": {
+        "baselineAQI": 260,
+        "baselinePollutants": {
+          "PM2.5": 112,
+          "PM10": 168,
+          "NO2": 58,
+          "CO": 7.2,
+          "SO2": 30,
+          "O3": 39
+        }
+      },
+      "Central": {
+        "baselineAQI": 285,
+        "baselinePollutants": {
+          "PM2.5": 122,
+          "PM10": 185,
+          "NO2": 68,
+          "CO": 8.2,
+          "SO2": 36,
+          "O3": 46
+        }
+      }
+    },
+    "Noida": {
+      "North": {
+        "baselineAQI": 268,
+        "baselinePollutants": {
+          "PM2.5": 116,
+          "PM10": 172,
+          "NO2": 61,
+          "CO": 7.4,
+          "SO2": 31,
+          "O3": 41
+        }
+      },
+      "South": {
+        "baselineAQI": 245,
+        "baselinePollutants": {
+          "PM2.5": 102,
+          "PM10": 155,
+          "NO2": 52,
+          "CO": 6.5,
+          "SO2": 26,
+          "O3": 36
+        }
+      },
+      "East": {
+        "baselineAQI": 265,
+        "baselinePollutants": {
+          "PM2.5": 114,
+          "PM10": 170,
+          "NO2": 59,
+          "CO": 7.3,
+          "SO2": 30,
+          "O3": 39
+        }
+      },
+      "West": {
+        "baselineAQI": 258,
+        "baselinePollutants": {
+          "PM2.5": 110,
+          "PM10": 165,
+          "NO2": 57,
+          "CO": 7,
+          "SO2": 29,
+          "O3": 38
+        }
+      },
+      "Central": {
+        "baselineAQI": 278,
+        "baselinePollutants": {
+          "PM2.5": 120,
+          "PM10": 180,
+          "NO2": 66,
+          "CO": 8,
+          "SO2": 34,
+          "O3": 44
+        }
+      }
+    },
+    "Ghaziabad": {
+      "North": {
+        "baselineAQI": 272,
+        "baselinePollutants": {
+          "PM2.5": 117,
+          "PM10": 174,
+          "NO2": 63,
+          "CO": 7.6,
+          "SO2": 32,
+          "O3": 42
+        }
+      },
+      "South": {
+        "baselineAQI": 248,
+        "baselinePollutants": {
+          "PM2.5": 104,
+          "PM10": 158,
+          "NO2": 54,
+          "CO": 6.7,
+          "SO2": 27,
+          "O3": 37
+        }
+      },
+      "East": {
+        "baselineAQI": 268,
+        "baselinePollutants": {
+          "PM2.5": 115,
+          "PM10": 172,
+          "NO2": 61,
+          "CO": 7.4,
+          "SO2": 31,
+          "O3": 40
+        }
+      },
+      "West": {
+        "baselineAQI": 262,
+        "baselinePollutants": {
+          "PM2.5": 113,
+          "PM10": 169,
+          "NO2": 59,
+          "CO": 7.3,
+          "SO2": 30,
+          "O3": 39
+        }
+      },
+      "Central": {
+        "baselineAQI": 282,
+        "baselinePollutants": {
+          "PM2.5": 121,
+          "PM10": 183,
+          "NO2": 67,
+          "CO": 8.1,
+          "SO2": 35,
+          "O3": 45
+        }
+      }
+    },
+    "Faridabad": {
+      "North": {
+        "baselineAQI": 270,
+        "baselinePollutants": {
+          "PM2.5": 116,
+          "PM10": 173,
+          "NO2": 62,
+          "CO": 7.5,
+          "SO2": 32,
+          "O3": 41
+        }
+      },
+      "South": {
+        "baselineAQI": 246,
+        "baselinePollutants": {
+          "PM2.5": 103,
+          "PM10": 156,
+          "NO2": 53,
+          "CO": 6.6,
+          "SO2": 27,
+          "O3": 36
+        }
+      },
+      "East": {
+        "baselineAQI": 266,
+        "baselinePollutants": {
+          "PM2.5": 114,
+          "PM10": 171,
+          "NO2": 60,
+          "CO": 7.3,
+          "SO2": 31,
+          "O3": 39
+        }
+      },
+      "West": {
+        "baselineAQI": 260,
+        "baselinePollutants": {
+          "PM2.5": 111,
+          "PM10": 167,
+          "NO2": 58,
+          "CO": 7.1,
+          "SO2": 29,
+          "O3": 38
+        }
+      },
+      "Central": {
+        "baselineAQI": 280,
+        "baselinePollutants": {
+          "PM2.5": 119,
+          "PM10": 178,
+          "NO2": 65,
+          "CO": 7.9,
+          "SO2": 33,
+          "O3": 43
+        }
+      }
+    }
+  }
+}

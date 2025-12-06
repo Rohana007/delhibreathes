@@ -1,0 +1,22 @@
+# Safe Route Finder Python Dependencies
+# Install with: pip install -r backend/src/safe_route/requirements.txt
+# Note: This service is called via Node.js subprocess, not as a standalone FastAPI server
+
+# Google Maps API
+requests>=2.31.0
+urllib3>=2.1.0
+
+# MongoDB
+pymongo>=4.6.0
+
+# Redis
+redis>=5.0.0
+
+# Scientific computing for KD-tree
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Testing (optional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
