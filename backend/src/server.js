@@ -15,6 +15,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const gamificationRoutes = require('./routes/gamificationRoutes');
 const alertsRoutes = require('./routes/alerts');
 const safeRouteApiRoutes = require('./safe_route/api/safe_route.routes'); // Safe Route API routes
+const sourceIdentificationRoutes = require('./routes/sourceIdentificationRoute'); // Source Identification routes
 
 // Import alert engine cron
 require('./cron/alertEngine');
@@ -176,6 +177,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/alerts', alertsRoutes);
 // Safe Route API routes
 app.use('/api/safe-route', safeRouteApiRoutes);
+// Source Identification routes
+app.use('/api/source-identification', sourceIdentificationRoutes);
 
 // Other API routes (AQI, hotspots, etc.)
 // This includes /api/reports (public endpoint for policy dashboard)
