@@ -1,0 +1,16 @@
+{
+  "CPCB": 0.95,
+  "NASA": 0.90,
+  "IMD": 0.88,
+  "Traffic": 0.85,
+  "UserReports": 0.60,
+  "metadata": {
+    "description": "Validation weights for different data sources based on reliability and official status",
+    "CPCB": "Central Pollution Control Board - highest official authority",
+    "NASA": "NASA FIRMS fire data - high reliability for biomass burning",
+    "IMD": "India Meteorological Department - official weather data",
+    "Traffic": "Traffic flow data - moderate reliability",
+    "UserReports": "Crowdsourced reports - lower reliability, requires validation"
+  }
+}
+

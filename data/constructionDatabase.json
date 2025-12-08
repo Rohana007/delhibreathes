@@ -1,0 +1,41 @@
+[
+  {
+    "id": "C-1001",
+    "siteName": "Site A",
+    "active": true,
+    "lat": 28.61,
+    "lng": 77.21,
+    "lastReported": "2025-11-30",
+    "area_m2": 5000,
+    "dustFactor": 1.2
+  },
+  {
+    "id": "C-1002",
+    "siteName": "Site B",
+    "active": true,
+    "lat": 28.62,
+    "lng": 77.22,
+    "lastReported": "2025-11-29",
+    "area_m2": 8000,
+    "dustFactor": 1.5
+  },
+  {
+    "id": "C-1003",
+    "siteName": "Site C",
+    "active": false,
+    "lat": 28.60,
+    "lng": 77.20,
+    "lastReported": "2025-11-25",
+    "area_m2": 3000,
+    "dustFactor": 0.8
+  },
+  {
+    "metadata": {
+      "source": "DPCC Construction Site Database - Processed Official Static Data",
+      "description": "Active construction sites in Delhi NCR",
+      "lastUpdated": "2025-11-30",
+      "totalRecords": 3
+    }
+  }
+]
+

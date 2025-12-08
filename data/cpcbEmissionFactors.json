@@ -1,0 +1,33 @@
+{
+  "PM25": {
+    "2W": 0.12,
+    "4W_Petrol": 0.05,
+    "4W_Diesel": 0.12,
+    "LCV": 0.70,
+    "HCV": 1.20,
+    "Bus": 1.30
+  },
+  "NOx": {
+    "4W_Petrol": 0.50,
+    "4W_Diesel": 1.40,
+    "LCV": 4.50,
+    "HCV": 8.50,
+    "Bus": 9.00
+  },
+  "CO": {
+    "2W": 2.10,
+    "4W_Petrol": 1.20,
+    "4W_Diesel": 0.80,
+    "LCV": 2.50,
+    "HCV": 3.20,
+    "Bus": 3.50
+  },
+  "metadata": {
+    "source": "CPCB Emission Factor Database - Processed Official Static Data",
+    "description": "Emission factors (g/km) from Central Pollution Control Board documents",
+    "reference": "CPCB Emission Inventory Guidelines 2020",
+    "lastUpdated": "2025-11-30",
+    "units": "g/km"
+  }
+}
+

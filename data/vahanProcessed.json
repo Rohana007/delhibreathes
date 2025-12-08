@@ -1,0 +1,29 @@
+{
+  "vehicleMix": {
+    "twoW": 0.38,
+    "threeW": 0.10,
+    "fourW": 0.31,
+    "LCV": 0.11,
+    "HCV": 0.07,
+    "bus": 0.03
+  },
+  "fuelMix": {
+    "petrol": 0.37,
+    "diesel": 0.41,
+    "CNG": 0.18,
+    "electric": 0.04
+  },
+  "ageMix": {
+    "0_5": 0.22,
+    "5_10": 0.34,
+    "10_15": 0.27,
+    "15_plus": 0.17
+  },
+  "metadata": {
+    "source": "VAHAN Open Data Portal - Processed Official Static Data",
+    "description": "Aggregated vehicle registration statistics from VAHAN database",
+    "lastUpdated": "2025-11-30",
+    "region": "Delhi NCR"
+  }
+}
+

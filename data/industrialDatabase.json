@@ -1,0 +1,44 @@
+[
+  {
+    "id": "IND-1001",
+    "name": "Sample Industry A",
+    "category": "Red",
+    "fuel": "Coal",
+    "stackHeight_m": 22,
+    "lat": 28.60,
+    "lng": 77.20,
+    "emissionFactor_PM25": 45.2,
+    "operatingHours": 24
+  },
+  {
+    "id": "IND-1002",
+    "name": "Sample Industry B",
+    "category": "Orange",
+    "fuel": "Natural Gas",
+    "stackHeight_m": 18,
+    "lat": 28.61,
+    "lng": 77.21,
+    "emissionFactor_PM25": 12.5,
+    "operatingHours": 16
+  },
+  {
+    "id": "IND-1003",
+    "name": "Sample Industry C",
+    "category": "Red",
+    "fuel": "Diesel",
+    "stackHeight_m": 25,
+    "lat": 28.59,
+    "lng": 77.19,
+    "emissionFactor_PM25": 38.7,
+    "operatingHours": 20
+  },
+  {
+    "metadata": {
+      "source": "DPCC Industrial Database - Processed Official Static Data",
+      "description": "Registered industries in Delhi NCR with emission characteristics",
+      "lastUpdated": "2025-11-30",
+      "totalRecords": 3
+    }
+  }
+]
+
