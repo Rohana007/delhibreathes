@@ -9,6 +9,7 @@ import AchievementsPage from './pages/AchievementsPage';
 import GreenPointsPage from './pages/GreenPointsPage';
 import AirShieldNavigator from './pages/airshield/AirShieldNavigator';
 import SafeRouteMap from './pages/SafeRouteMap';
+import SourceAnalysisPage from './pages/SourceAnalysisPage';
 import StartPage from './pages/StartPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -19,6 +20,7 @@ import { useEffect } from 'react';
 import { addDailyLoginPoints } from './utils/pointsEngine';
 import { checkAchievements } from './utils/achievementsEngine';
 import { initTranslation } from './utils/translator/localTranslator';
+import { useFeatureFlags } from './hooks/useFeatureFlags';
 
 // Policy Pages
 import PolicyLoginNew from './policy/pages/PolicyLoginNew';
@@ -34,6 +36,7 @@ import PolicyProfileEdit from './policy/pages/PolicyProfileEdit';
 import PolicyProtectedRouteNew from './policy/components/PolicyProtectedRouteNew';
 
 function App() {
+  const flags = useFeatureFlags();
   // Daily login hook
   useEffect(() => {
     addDailyLoginPoints();
@@ -49,7 +52,9 @@ function App() {
     <ThemeProvider>
       <AppProvider>
         <Router>
-          <ReportPollutionModal />
+          <div className={!flags.showReportPollution ? 'hidden-feature' : ''}>
+            <ReportPollutionModal />
+          </div>
           <Routes>
             {/* Default route - redirect to start page */}
             <Route path="/" element={<Navigate to="/start" replace />} />
@@ -74,7 +79,7 @@ function App() {
               </div>
             } />
             <Route path="/my-reports" element={
-              <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }}>
+              <div className={`min-h-screen flex flex-col ${!flags.showMyReports ? 'hidden-feature' : ''}`} style={{ background: '#ffffff' }}>
                 <Header />
                 <main className="flex-1">
                   <MyReports />
@@ -83,7 +88,7 @@ function App() {
               </div>
             } />
             <Route path="/achievements" element={
-              <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }}>
+              <div className={`min-h-screen flex flex-col ${!flags.showGamification ? 'hidden-feature' : ''}`} style={{ background: '#ffffff' }}>
                 <Header />
                 <main className="flex-1">
                   <AchievementsPage />
@@ -92,7 +97,7 @@ function App() {
               </div>
             } />
             <Route path="/green-points" element={
-              <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }}>
+              <div className={`min-h-screen flex flex-col ${!flags.showGamification ? 'hidden-feature' : ''}`} style={{ background: '#ffffff' }}>
                 <Header />
                 <main className="flex-1">
                   <GreenPointsPage />
@@ -102,6 +107,15 @@ function App() {
             } />
             <Route path="/airshield-navigator" element={<AirShieldNavigator />} />
             <Route path="/safe-route-map" element={<SafeRouteMap />} />
+            <Route path="/source-analysis" element={
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1">
+                  <SourceAnalysisPage />
+                </main>
+                <Footer />
+              </div>
+            } />
 
             {/* Start Page */}
             <Route path="/start" element={<StartPage />} />
@@ -122,10 +136,22 @@ function App() {
               </PolicyProtectedRouteNew>
             }>
               <Route index element={<PolicyDashboard />} />
-              <Route path="simulator" element={<PolicySimulatorPage />} />
+              <Route path="simulator" element={
+                <div className={!flags.showPolicySimulator ? 'hidden-feature' : ''}>
+                  <PolicySimulatorPage />
+                </div>
+              } />
               {/* Reports page is public - accessible without authentication */}
-              <Route path="reports" element={<PolicyReports />} />
-              <Route path="analytics" element={<PolicyAnalytics />} />
+              <Route path="reports" element={
+                <div className={!flags.showCitizenReports ? 'hidden-feature' : ''}>
+                  <PolicyReports />
+                </div>
+              } />
+              <Route path="analytics" element={
+                <div className={!flags.showReportsAnalytics ? 'hidden-feature' : ''}>
+                  <PolicyAnalytics />
+                </div>
+              } />
               <Route path="hotspots" element={<PolicyHotspots />} />
               <Route path="source-contribution" element={<PolicySourceContribution />} />
               <Route path="profile" element={<PolicyProfile />} />
