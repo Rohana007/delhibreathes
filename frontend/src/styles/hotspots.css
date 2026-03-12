@@ -1,0 +1,150 @@
+/* Hotspots Map Styling and Animations */
+
+/* Hotspot Modal - Glass Background */
+.hotspot-modal {
+  background: #ffffffdd;
+  backdrop-filter: blur(12px);
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.25s ease-out;
+  z-index: 9999;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Section Styling */
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.65;
+  color: #64748B;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-value {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #0F172A;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.modal-info-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.modal-info-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Wind Arrow Animation - SVG Stroke with Drift */
+.animate-arrow {
+  stroke: #ff7f2a;
+  stroke-width: 2px;
+  opacity: 0.9;
+  animation: drift 1.2s linear infinite;
+}
+
+@keyframes drift {
+  from {
+    opacity: 0.3;
+    transform: translateY(0px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+}
+
+.wind-arrow {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Wind Arrow SVG Styling - Transparent Background */
+.wind-arrow-svg {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.wind-arrow-svg line {
+  stroke-width: 2;
+  stroke: #ff7f2a;
+  fill: none;
+  animation: drift 1.2s linear infinite;
+}
+
+.wind-arrow-svg path {
+  fill: #ff7f2a;
+  opacity: 0.9;
+}
+
+/* Hotspot Info Icon - Styled Round Button with Hover Glow */
+.hotspot-info-icon {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1001;
+  border: 2px solid #009769;
+}
+
+.hotspot-info-icon:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 16px rgba(0, 151, 105, 0.4);
+  background: #009769;
+}
+
+.hotspot-info-icon:hover svg {
+  color: white;
+}
+
+/* Legacy Animation (kept for compatibility) */
+.animate-wind {
+  animation: wind-move 1.2s linear infinite;
+}
+
+@keyframes wind-move {
+  from {
+    opacity: 0.4;
+    transform: translateX(0px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(8px);
+  }
+}
+
+/* Leaflet Marker Info Icon Overlay */
+.leaflet-marker-icon.hotspot-info-marker {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+

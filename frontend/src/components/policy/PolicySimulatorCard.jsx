@@ -1,9 +1,16 @@
 import { motion } from 'framer-motion';
 import { Beaker, BarChart3, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 export default function PolicySimulatorCard() {
   const navigate = useNavigate();
+  const flags = useFeatureFlags();
+  
+  // Always render for Round 2 - feature flag check removed
+  // if (!flags.showPolicySimulator) {
+  //   return null;
+  // }
 
   const handleNavigate = () => {
     navigate('/policy-dashboard/simulator');

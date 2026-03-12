@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { X, AlertTriangle, TrendingUp, TrendingDown, Minus, Info, ExternalLink } from 'lucide-react';
 import { POLLUTANT_INFO } from '../../utils/helpers';
+import PollutantBreakdownLineChart from './PollutantBreakdownLineChart';
 
 export default function PollutantDetailPanel({ data, onClose }) {
   if (!data) return null;
@@ -48,6 +49,15 @@ export default function PollutantDetailPanel({ data, onClose }) {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh] custom-scroll" style={{ backgroundColor: '#FFFFFF' }}>
+          {/* Pollutant Breakdown Line Chart */}
+          {data?.pollutants && (
+            <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+              <PollutantBreakdownLineChart 
+                pollutantData={data.historicalPollutants || []} 
+              />
+            </div>
+          )}
+
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-4 mb-6 p-3 rounded-lg glass-card">
             <div className="flex items-center gap-2 text-xs">

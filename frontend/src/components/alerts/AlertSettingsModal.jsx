@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
+import { forceImmediateAlertCheck } from '@/utils/alertsEngine';
 
 const HEALTH_CATEGORIES = [
   { value: 'normal', label: 'Normal', description: 'Healthy adult' },
@@ -41,60 +42,47 @@ export default function AlertSettingsModal({ onSave, onClose }) {
     setError('');
 
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Please login first');
-        setLoading(false);
-        return;
-      }
-
-      const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000';
+      // Get user's email from localStorage
+      // Priority: user object > direct email key
+      let email = null;
       
-      const response = await fetch(`${FASTAPI_BASE}/user/alerts/enable`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          region: region,
-          health_category: healthCategory,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
-        if (response.status === 404) {
-          errorMessage = 'Gamification server not running. Please start the FastAPI server on port 8000.';
-        } else {
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.detail || errorData.error || errorMessage;
-          } catch (e) {
-            // If response is not JSON, use status text
-            errorMessage = response.statusText || errorMessage;
-          }
+      // Try to get from 'user' object (stored as JSON string)
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          email = user.email || user.userEmail || null;
+        } catch (e) {
+          // Invalid JSON, will try direct email key below
         }
-        throw new Error(errorMessage);
+      }
+      
+      // Fallback to direct 'email' key if not found in user object
+      if (!email) {
+        email = localStorage.getItem('email');
       }
 
-      const data = await response.json();
+      // Save alerts preferences to localStorage (no backend API call)
+      const alertsData = {
+        email: email || 'unknown',
+        region: region,
+        healthCategory: healthCategory,
+        enabled: true,
+      };
+      
+      localStorage.setItem('personalized_alerts', JSON.stringify(alertsData));
 
-      if (data.success && data.alerts_enabled) {
-        // Call onSave callback to update parent state and close modal
-        await onSave({ healthCategory, region });
-        // Close modal after successful save
-        onClose();
-      } else {
-        throw new Error(data.detail || 'Failed to enable alerts');
-      }
+      // Success - update parent state and close modal instantly
+      await onSave({ healthCategory, region });
+      onClose();
+      
+      // Trigger instant alert check within 100ms
+      setTimeout(() => {
+        forceImmediateAlertCheck();
+      }, 100);
     } catch (err) {
-      console.error('Error enabling alerts:', err);
-      if (err.message && err.message.includes('fetch')) {
-        setError('Backend is offline or unreachable. Please start the FastAPI server on port 8000.');
-      } else {
-        setError(err.message || 'Failed to save settings');
-      }
+      // Generic error message
+      setError('Unable to update alerts');
     } finally {
       setLoading(false);
     }

@@ -6,17 +6,17 @@ This directory contains **processed official static data** derived from authorit
 
 ## Official Data Sources
 
-### 1. VAHAN Vehicle Registration Data
-- **Source**: VAHAN Open Data Portal
-- **URL**: https://vahan.parivahan.gov.in/vahan4dashboard/
-- **Description**: Aggregated vehicle registration statistics including vehicle mix (2W, 3W, 4W, LCV, HCV, Bus), fuel type distribution (Petrol, Diesel, CNG, Electric), and age distribution
-- **File**: `vahanProcessed.json`
-- **Usage**: Used in vehicular pollution source identification
+### 1. Delhi Transport Department Vehicle Data
+- **Source**: Delhi Transport Department (processed), CPCB reports, IITD 2022-23
+- **URL**: https://transport.delhi.gov.in/ (Delhi Transport Dept stats)
+- **Description**: Calibrated vehicle registration statistics for Delhi NCR including vehicle mix (2W: 45%, 3W: 6%, 4W: 33%, LCV: 6%, HCV: 5%, Bus: 5%), fuel type distribution (Petrol: 48%, Diesel: 32%, CNG: 17%, Electric: 3%), and age distribution
+- **File**: `vahan_delhi_processed.json`
+- **Usage**: Used in vehicular pollution source identification with Delhi-calibrated baseline
 - **Privacy Note**: No personal vehicle or owner data is used; only aggregated statistics
 
 ### 2. CPCB Emission Factors
 - **Source**: Central Pollution Control Board (CPCB) Emission Factor Database
-- **URL**: https://cpcb.nic.in/emission-factors/
+- **URL**: https://cpcb.nic.in/emission-factors/ (CPCB emission factors)
 - **Reference Document**: CPCB Emission Inventory Guidelines 2020
 - **Description**: Official emission factors (g/km) for PM2.5, NOx, CO by vehicle type
 - **File**: `cpcbEmissionFactors.json`
@@ -38,20 +38,27 @@ This directory contains **processed official static data** derived from authorit
 - **File**: `constructionDatabase.json`
 - **Usage**: Construction dust source identification within configurable radius
 
-### 5. NASA FIRMS Fire Data
+### 5. NASA FIRMS Fire Data (VIIRS/OMI)
 - **Source**: NASA Fire Information for Resource Management System (FIRMS)
-- **URL**: https://firms.modaps.eosdis.nasa.gov/
-- **Description**: Satellite-detected fire hotspots for biomass burning identification
-- **Usage**: Optional live signal (if API key available) or hourly-updated file
-- **Fallback**: Safe mock data if live data unavailable
+- **URL**: https://firms.modaps.eosdis.nasa.gov/ (NASA FIRMS VIIRS/OMI)
+- **Description**: Satellite-detected fire hotspots for biomass burning identification using VIIRS and OMI sensors
+- **File**: `firms_viirs_recent.json` (live) or `firms_sample_viirs.json` (fallback)
+- **Usage**: Optional live signal (if network available) or hourly-updated file
+- **Fallback**: Safe empty data if live data unavailable
 - **Validation Weight**: 0.90 (high reliability)
 
-### 6. IMD Weather Data
-- **Source**: India Meteorological Department (IMD)
-- **URL**: https://mausam.imd.gov.in/
-- **Description**: Official weather data including wind speed, wind direction, temperature, humidity
-- **Usage**: Wind factor calculations for dispersion modeling
-- **Validation Weight**: 0.88 (high reliability)
+### 6. MODIS AOD Data
+- **Source**: NASA MODIS Aerosol Optical Depth
+- **URL**: https://modis.gsfc.nasa.gov/data/ (MODIS AOD)
+- **Description**: Aerosol Optical Depth measurements for atmospheric particle loading
+- **Usage**: Construction dust and general pollution level indicators
+
+### 7. Open-Meteo Weather Data
+- **Source**: Open-Meteo Free Weather API
+- **URL**: https://open-meteo.com/ (Open-Meteo)
+- **Description**: Free weather data including wind speed, wind direction, temperature, humidity
+- **Usage**: Wind factor calculations for dispersion modeling (fallback to default 2.0 m/s if network unavailable)
+- **Validation Weight**: 0.88 (high reliability when available)
 
 ### 7. Validation Weights
 - **Source**: Internal calibration based on data source reliability

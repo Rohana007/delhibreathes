@@ -29,16 +29,22 @@ const CATEGORY_WEIGHTS = {
 /**
  * Calculates stack dispersion factor based on stack height
  * Higher stacks disperse better, reducing ground-level impact
- * Formula: 1 / (1 + stackHeight_m / 50)
+ * Formula: <20m => 1.4, 20-40m => 1.0, >40m => 0.6
  * @param {number} stackHeight_m - Stack height in meters
- * @returns {number} - Dispersion factor (0 to 1)
+ * @returns {number} - Dispersion factor
  */
 function stackDispersionFactor(stackHeight_m) {
   try {
     const height = utils.safeNumber(stackHeight_m, 20);
-    return 1 / (1 + height / 50);
+    if (height < 20) {
+      return 1.4; // Low stack, high ground impact
+    } else if (height <= 40) {
+      return 1.0; // Moderate stack
+    } else {
+      return 0.6; // High stack, better dispersion
+    }
   } catch (error) {
-    return 0.5; // Default moderate dispersion
+    return 1.0; // Default moderate dispersion
   }
 }
 
@@ -84,6 +90,7 @@ function proximityFactor(distanceKm) {
  * @param {Object} params - Input parameters
  * @param {number} params.lat - Latitude
  * @param {number} params.lng - Longitude
+ * @param {Object} params.aqi - AQI data with SO2 (optional)
  * @param {Object} params.industrialData - Industrial database (optional, loaded if not provided)
  * @param {Object} params.validationWeights - Validation weights (optional, loaded if not provided)
  * @param {number} params.searchRadiusKm - Search radius in km (default: 5)
@@ -95,12 +102,16 @@ function calculateIndustrialContribution(params = {}) {
   try {
     // Load static data
     const industrialData = params.industrialData || utils.loadJSONSafe('data/industrialDatabase.json', []);
-    const validationWeights = params.validationWeights || utils.loadJSONSafe('data/validationWeights.json', {});
+    const calibrationBaselines = params.calibrationBaselines || utils.loadJSONSafe('data/calibration_baselines.json', {});
     
     // Validate inputs
     const lat = utils.safeNumber(params.lat, 28.6139);
     const lng = utils.safeNumber(params.lng, 77.2090);
     const searchRadiusKm = utils.safeNumber(params.searchRadiusKm, 5);
+    
+    // Extract SO2 from AQI (if provided)
+    const aqi = params.aqi || {};
+    const so2 = utils.safeNumber(aqi.so2, 0);
     
     // Filter out metadata if present
     const industries = Array.isArray(industrialData) 
@@ -143,14 +154,28 @@ function calculateIndustrialContribution(params = {}) {
     }
     
     if (nearbyIndustries.length === 0) {
+      // If no industries found but SO2 spike present, return small default
+      let defaultScore = 0.05;
+      if (so2 > 50) { // SO2 spike threshold
+        defaultScore = 0.10;
+        warnings.push(`No industries found within ${searchRadiusKm} km, but SO2 spike detected (${so2.toFixed(1)})`);
+      } else {
+        warnings.push(`No industries found within ${searchRadiusKm} km radius`);
+      }
+      
       return {
-        score: 0,
+        score: defaultScore,
         breakdown: {},
         confidence: 0.5,
-        warnings: [`No industries found within ${searchRadiusKm} km radius`],
+        warnings: warnings.length > 0 ? warnings : undefined,
+        notes_readable: nearbyIndustries.length === 0 
+          ? `No industries found within ${searchRadiusKm} km. ${so2 > 50 ? `SO2 spike (${so2.toFixed(1)}) suggests distant industrial source.` : 'Score set to baseline.'}`
+          : undefined,
         metadata: {
           searchRadiusKm,
-          totalIndustriesInDatabase: industries.length
+          totalIndustriesInDatabase: industries.length,
+          nearbyIndustriesCount: 0,
+          so2Level: so2
         }
       };
     }
@@ -200,15 +225,13 @@ function calculateIndustrialContribution(params = {}) {
       }
     }
     
-    // Apply validation weight (using CPCB weight for industrial sources)
-    const cpcbWeight = utils.safeNumber(validationWeights.CPCB, 0.95);
-    const finalScore = totalScore * cpcbWeight;
+    // Apply calibration scale
+    const industrialScale = utils.safeNumber(calibrationBaselines.calibrationFactors?.industrialScale, 1.0);
+    const finalScore = totalScore * industrialScale;
     
     // Calculate confidence
     let confidence = 0.85;
-    if (nearbyIndustries.length === 0) {
-      confidence = 0.3;
-    } else if (nearbyIndustries.length < 2) {
+    if (nearbyIndustries.length < 2) {
       confidence = 0.6;
     }
     
@@ -219,15 +242,24 @@ function calculateIndustrialContribution(params = {}) {
     
     confidence = utils.clamp(confidence, 0.3, 1.0);
     
+    // Generate readable notes
+    const industryNames = Object.keys(breakdown).slice(0, 2);
+    const notes_readable = `Industrial contribution from ${nearbyIndustries.length} nearby industries. ` +
+      `${industryNames.length > 0 ? `Nearest: ${industryNames[0]}. ` : ''}` +
+      `${so2 > 0 ? `SO2 level: ${so2.toFixed(1)}. ` : ''}` +
+      `Stack heights and fuel types analyzed using DPCC database.`;
+    
     return {
       score: utils.safeNumber(finalScore, 0),
       breakdown,
       confidence: utils.safeNumber(confidence, 0.7),
       warnings: warnings.length > 0 ? warnings : undefined,
+      notes_readable,
       metadata: {
         nearbyIndustriesCount: nearbyIndustries.length,
         searchRadiusKm,
-        totalIndustriesInDatabase: industries.length
+        totalIndustriesInDatabase: industries.length,
+        so2Level: so2
       }
     };
     

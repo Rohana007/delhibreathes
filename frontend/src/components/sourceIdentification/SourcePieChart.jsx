@@ -4,10 +4,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 const hasRecharts = typeof PieChart !== 'undefined';
 
 const COLORS = {
-  vehicular: '#10b981', // green
-  industrial: '#f97316', // orange
-  construction: '#3b82f6', // blue
-  biomass: '#ef4444', // red
+  vehicular: '#2E7D32', // green
+  industrial: '#EF6C00', // orange
+  construction: '#1565C0', // blue
+  biomass: '#C62828', // red
 };
 
 function SourcePieChart({ data }) {
@@ -38,7 +38,7 @@ function SourcePieChart({ data }) {
   // If recharts is not available, render simple HTML fallback
   if (!hasRecharts) {
     return (
-      <div className="pie-chart-fallback">
+      <div className="pie-chart-fallback bg-white">
         <div className="space-y-2">
           {contributions.map((item) => (
             <div key={item.name} className="flex items-center justify-between">
@@ -47,9 +47,9 @@ function SourcePieChart({ data }) {
                   className="w-4 h-4 rounded"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{item.name}</span>
+                <span className="text-sm text-black">{item.name}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-800 dark:text-white">
+              <span className="text-sm font-semibold text-black">
                 {item.value.toFixed(1)}%
               </span>
             </div>
@@ -60,26 +60,32 @@ function SourcePieChart({ data }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={contributions}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {contributions.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="bg-white">
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={contributions}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {contributions.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value) => `${value.toFixed(1)}%`}
+            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }}
+            labelStyle={{ color: '#000' }}
+          />
+          <Legend wrapperStyle={{ color: '#222' }} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 

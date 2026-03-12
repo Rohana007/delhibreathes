@@ -42,3 +42,20 @@ temp/
 .parcel-cache/
 .eslintcache
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Backend uploads
+backend/uploads/
+
+# ML Models (too large)
+aqi-forecasting/models/*.pkl
+aqi-forecasting/models/*.h5
+*.keras
+

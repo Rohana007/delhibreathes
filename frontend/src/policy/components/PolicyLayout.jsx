@@ -67,6 +67,7 @@ export default function PolicyLayout() {
         <nav className="flex-1">
           <ul>
             {navItems.map((item) => {
+              // Show all items including Reports and Analytics
               const isActive = location.pathname === item.path || 
                 (item.path === '/policy-dashboard' && location.pathname === '/policy-dashboard') ||
                 (item.path === '/policy-dashboard/simulator' && location.pathname.startsWith('/policy-dashboard/simulator'));
@@ -207,6 +208,7 @@ export default function PolicyLayout() {
               <nav className="flex-1">
                 <ul>
                   {navItems.map((item) => {
+                    // Show all items including Reports and Analytics
                     const isActive = location.pathname === item.path || 
                       (item.path === '/policy-dashboard' && location.pathname === '/policy-dashboard') ||
                       (item.path === '/policy-dashboard/simulator' && location.pathname.startsWith('/policy-dashboard/simulator'));

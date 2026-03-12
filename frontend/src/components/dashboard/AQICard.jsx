@@ -4,7 +4,6 @@ import { Wind, TrendingUp, TrendingDown, Minus, ChevronDown, Info } from 'lucide
 import { useApp } from '../../context/AppContext';
 import { getAqiLabel, getAqiColor, getAqiClass, POLLUTANT_INFO } from '../../utils/helpers';
 import PollutantDetailPanel from './PollutantDetailPanel';
-import PollutantMiniChart from './PollutantMiniChart';
 
 export default function AQICard() {
   const { ncrAqi, predictions, selectedRegion, setSelectedRegion, loading, error, fetchData } = useApp();
@@ -196,12 +195,6 @@ export default function AQICard() {
             </span>
           </div>
 
-          {/* Pollutant Breakdown Chart */}
-          {regionData?.pollutants && (
-            <div className="mb-4 overflow-hidden w-full" style={{ maxWidth: '100%' }}>
-              <PollutantMiniChart data={regionData.pollutants} />
-            </div>
-          )}
 
           {/* Health Impact */}
           <div className="text-center mb-4">

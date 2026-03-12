@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bell, User, Briefcase, Menu, X, FileText, AlertTriangle, Info, CheckCircle, Settings, LogOut, Award, RotateCcw } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,11 +12,13 @@ import PointsWidget from '../PointsWidget';
 import ReportPollution from '../reports/ReportPollution';
 import LanguageSwitcher from '../LanguageSwitcher';
 import { getGamificationSummary } from '../../services/api';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 export default function Header() {
   const { mode, setMode, ncrAqi, lastUpdated, fetchData, loading, insights, scrollToSection, showReportModal, setShowReportModal } = useApp();
   const { theme } = useTheme();
   const { user, token } = useAuth();
+  const flags = useFeatureFlags();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -238,8 +240,8 @@ export default function Header() {
               <RotateCcw size={20} />
             </button>
 
-            {/* Language Switcher */}
-            <LanguageSwitcher iconColor={iconColor} hoverBg={hoverBg} />
+            {/* Language Switcher - Disabled for Round 2 */}
+            {flags.showLanguage && <LanguageSwitcher iconColor={iconColor} hoverBg={hoverBg} />}
 
             {/* Alerts - Notification Dropdown */}
             <div className="relative" ref={notificationRef}>
@@ -368,17 +370,34 @@ export default function Header() {
             </div>
 
             {/* My Reports Button */}
-            <button
-              onClick={() => navigate('/my-reports')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                location.pathname === '/my-reports' ? 'chip active' : 'btn-ghost'
-              }`}
-              title="View my reports"
-              data-translate="View my reports"
-            >
-              <FileText className="w-4 h-4" />
-              <span data-translate="My Reports">My Reports</span>
+            <div className={!flags.showMyReports ? 'hidden-feature' : ''}>
+              <button
+                onClick={() => navigate('/my-reports')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  location.pathname === '/my-reports' ? 'chip active' : 'btn-ghost'
+                }`}
+                title="View my reports"
+                data-translate="View my reports"
+              >
+                <FileText className="w-4 h-4" />
+                <span data-translate="My Reports">My Reports</span>
               </button>
+            </div>
+
+
+
+            {/* Validation Link */}
+            <Link
+              to="/validation"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                location.pathname === '/validation' ? 'chip active' : 'btn-ghost'
+              }`}
+              title="Validation"
+              data-translate="Validation"
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span data-translate="Validation">Validation</span>
+            </Link>
 
             {/* Profile Dropdown */}
             {token && user ? (
@@ -514,7 +533,7 @@ export default function Header() {
                 disabled={loading}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg disabled:opacity-50 btn-ghost"
               >
-                <FiRefreshCw 
+                <RotateCcw 
                   className={`refresh-icon ${loading ? 'animate-spin' : ''}`}
                   style={{ 
                     width: '18px', 
@@ -539,16 +558,19 @@ export default function Header() {
                   </span>
                 )}
               </button>
-              <button
-                onClick={() => { navigate('/my-reports'); setMobileMenuOpen(false); }}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${
-                  location.pathname === '/my-reports' ? 'chip active' : 'btn-ghost'
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span data-translate="My Reports">My Reports</span>
-              </button>
+              <div className={!flags.showMyReports ? 'hidden-feature' : ''}>
+                <button
+                  onClick={() => { navigate('/my-reports'); setMobileMenuOpen(false); }}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${
+                    location.pathname === '/my-reports' ? 'chip active' : 'btn-ghost'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span data-translate="My Reports">My Reports</span>
+                </button>
+              </div>
             </div>
+
 
             {lastUpdated && (
               <p className="text-xs text-center mt-3" style={{ color: textSubtle }}>

@@ -1,0 +1,15 @@
+/**
+ * Alert System Styles
+ * Includes instant transition support for force-triggered alerts
+ */
+
+.slide-alert.instant {
+  transition: none !important;
+}
+
+/* Ensure instant alerts appear immediately */
+.instant {
+  animation: none !important;
+  transition: none !important;
+}
+

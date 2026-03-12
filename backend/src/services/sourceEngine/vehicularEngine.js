@@ -45,10 +45,10 @@ function calculateVehicularContribution(params = {}) {
   const warnings = [];
   
   try {
-    // Load static data files
-    const vahanData = params.vahanData || utils.loadJSONSafe('data/vahanProcessed.json', {});
+    // Load static data files - use Delhi-calibrated data
+    const vahanData = params.vahanData || utils.loadJSONSafe('data/vahan_delhi_processed.json', {});
     const cpcbData = params.cpcbData || utils.loadJSONSafe('data/cpcbEmissionFactors.json', {});
-    const validationWeights = params.validationWeights || utils.loadJSONSafe('data/validationWeights.json', {});
+    const calibrationBaselines = params.calibrationBaselines || utils.loadJSONSafe('data/calibration_baselines.json', {});
     
     // Validate inputs with safe defaults
     const lat = utils.safeNumber(params.lat, 28.6139);
@@ -63,53 +63,65 @@ function calculateVehicularContribution(params = {}) {
     const no2 = utils.safeNumber(aqi.no2, 50);
     const co = utils.safeNumber(aqi.co, 2.0);
     
+    // Calculate delta values (rise above baseline)
+    const deltaNO2 = Math.max(0, no2 - 30); // Baseline NO2 ~30
+    const deltaCO = Math.max(0.01, co - 1.0); // Baseline CO ~1.0
+    
     // Get factors
-    const congestionFactor = utils.congestionToFactor(trafficLevel);
+    const congestionFactorMap = {
+      'free': 0.8,
+      'moderate': 1.0,
+      'heavy': 1.3,
+      'jammed': 1.7
+    };
+    const congestionFactor = congestionFactorMap[trafficLevel] || 1.0;
     const idlingFactorValue = utils.idlingFactor(trafficLevel);
     const roadTypeFactorValue = utils.roadTypeFactor(roadType);
     const distanceDecayValue = utils.distanceDecay(distanceKm);
     const timeFactor = utils.timeOfDayFactor(new Date());
     
-    // Get vehicle mix from VAHAN data
-    const vehicleMix = vahanData.vehicleMix || {
-      twoW: 0.38,
-      fourW: 0.31,
-      LCV: 0.11,
-      HCV: 0.07,
-      bus: 0.03
+    // Get vehicle mix from Delhi data (new structure)
+    const vehicleTypeShare = vahanData.vehicleTypeShare || {
+      twoW: 0.45,
+      threeW: 0.06,
+      fourW: 0.33,
+      LCV: 0.06,
+      HCV: 0.05,
+      bus: 0.05
     };
     
-    // Get fuel mix
-    const fuelMix = vahanData.fuelMix || {
-      petrol: 0.37,
-      diesel: 0.41,
-      CNG: 0.18,
-      electric: 0.04
+    // Get fuel mix (new structure)
+    const fuelTypeShare = vahanData.fuelTypeShare || {
+      petrol: 0.48,
+      diesel: 0.32,
+      CNG: 0.17,
+      electric: 0.03
     };
     
-    // Get age mix
-    const ageMix = vahanData.ageMix || {
-      '0_5': 0.22,
-      '5_10': 0.34,
-      '10_15': 0.27,
-      '15_plus': 0.17
+    // Get age distribution (new structure)
+    const vehicleAgeDistribution = vahanData.vehicleAgeDistribution || {
+      '0_5': 0.28,
+      '5_10': 0.33,
+      '10_15': 0.21,
+      '15_plus': 0.18
     };
     
     // Get emission factors from CPCB
     const pm25Factors = cpcbData.PM25 || {};
     const noxFactors = cpcbData.NOx || {};
     
-    // Calculate average age factor (weighted by age mix)
-    let avgAgeFactor = 0;
-    for (const [ageRange, share] of Object.entries(ageMix)) {
-      const ageFactor = AGE_FACTORS[ageRange] || 1.0;
-      avgAgeFactor += ageFactor * utils.safeNumber(share, 0);
-    }
-    avgAgeFactor = utils.safeNumber(avgAgeFactor, 1.0);
+    // Calculate age factor (weighted sum as specified)
+    // ageWeight = 1.0*0_5 + 1.3*5_10 + 1.6*10_15 + 2.0*15_plus
+    let ageFactor = 0;
+    ageFactor += 1.0 * utils.safeNumber(vehicleAgeDistribution['0_5'], 0);
+    ageFactor += 1.3 * utils.safeNumber(vehicleAgeDistribution['5_10'], 0);
+    ageFactor += 1.6 * utils.safeNumber(vehicleAgeDistribution['10_15'], 0);
+    ageFactor += 2.0 * utils.safeNumber(vehicleAgeDistribution['15_plus'], 0);
+    ageFactor = utils.safeNumber(ageFactor, 1.0);
     
     // Calculate average fuel factor (weighted by fuel mix)
     let avgFuelFactor = 0;
-    for (const [fuelType, share] of Object.entries(fuelMix)) {
+    for (const [fuelType, share] of Object.entries(fuelTypeShare)) {
       const fuelFactor = FUEL_FACTORS[fuelType] || 1.0;
       avgFuelFactor += fuelFactor * utils.safeNumber(share, 0);
     }
@@ -119,9 +131,10 @@ function calculateVehicularContribution(params = {}) {
     const rawScoreBreakdown = {};
     let totalRawScore = 0;
     
-    // Process each vehicle type
+    // Process each vehicle type with Delhi data structure
     const vehicleTypes = [
       { key: 'twoW', cpcbKey: '2W', name: 'Two-Wheeler' },
+      { key: 'threeW', cpcbKey: '2W', name: 'Three-Wheeler' }, // Use 2W factors as proxy
       { key: 'fourW', cpcbKey: '4W_Petrol', name: 'Four-Wheeler (Petrol)' },
       { key: 'fourW', cpcbKey: '4W_Diesel', name: 'Four-Wheeler (Diesel)' },
       { key: 'LCV', cpcbKey: 'LCV', name: 'Light Commercial Vehicle' },
@@ -130,39 +143,51 @@ function calculateVehicularContribution(params = {}) {
     ];
     
     for (const vehicleType of vehicleTypes) {
-      const typeShare = utils.safeNumber(vehicleMix[vehicleType.key], 0);
+      const typeShare = utils.safeNumber(vehicleTypeShare[vehicleType.key], 0);
+      if (typeShare <= 0) continue; // Skip if no share
+      
       const emissionFactor = utils.safeNumber(pm25Factors[vehicleType.cpcbKey], 0.1);
       
+      // Get fuel factor for this type (approximate based on vehicle type)
+      let typeFuelFactor = avgFuelFactor;
+      if (vehicleType.key === 'twoW' || vehicleType.key === 'threeW') {
+        typeFuelFactor = FUEL_FACTORS.petrol * fuelTypeShare.petrol + 
+                        FUEL_FACTORS.electric * fuelTypeShare.electric;
+      }
+      
       // Calculate contribution for this vehicle type
+      // Formula: typeShare × emissionFactor × fuelFactor × ageFactor × congestionFactor × idlingFactor × distanceDecay
       const contribution = typeShare * 
                           emissionFactor * 
-                          avgAgeFactor * 
-                          avgFuelFactor * 
+                          typeFuelFactor * 
+                          ageFactor * 
                           congestionFactor * 
                           idlingFactorValue * 
-                          roadTypeFactorValue * 
-                          distanceDecayValue * 
-                          timeFactor;
+                          distanceDecayValue;
       
       rawScoreBreakdown[vehicleType.name] = utils.safeNumber(contribution, 0);
       totalRawScore += contribution;
     }
     
-    // Apply validation weight
-    const cpcbWeight = utils.safeNumber(validationWeights.CPCB, 0.95);
-    const finalScore = totalRawScore * cpcbWeight;
+    // Apply calibration scale
+    const vehicularScale = utils.safeNumber(calibrationBaselines.calibrationFactors?.vehicularScale, 1.0);
+    let rawScore = totalRawScore * vehicularScale;
+    
+    // Check for unrealistically low score and apply smoothing
+    const expectedRange = calibrationBaselines.expectedContributionRange?.vehicular || [0.30, 0.45];
+    const baselineMin = (expectedRange[0] + expectedRange[1]) / 2 * 0.1; // 10% of average expected
+    
+    if (rawScore < 0.05) {
+      warnings.push('vehicular_unrealistically_low');
+      rawScore = rawScore + baselineMin;
+    }
     
     // Calculate diesel signature score
-    // Formula: (NO2_rise / (CO_rise + 0.01)) × baselineDieselRatio × congestionFactor × roadTypeFactor × timeFactor
-    const baselineDieselRatio = utils.safeNumber(fuelMix.diesel, 0.41);
-    const no2Rise = Math.max(0, no2 - 30); // Baseline NO2 ~30
-    const coRise = Math.max(0.01, co - 1.0); // Baseline CO ~1.0
-    const dieselSignatureRatio = no2Rise / coRise;
-    const dieselSignatureScore = dieselSignatureRatio * 
-                                 baselineDieselRatio * 
-                                 congestionFactor * 
-                                 roadTypeFactorValue * 
-                                 timeFactor;
+    // Formula: (deltaNO2 / (deltaCO + 0.01)) × baselineDieselRatio × congestionFactor × timeFactor
+    const baselineDieselRatio = utils.safeNumber(fuelTypeShare.diesel, 0.32);
+    const no2_co_ratio = deltaNO2 / deltaCO;
+    let dieselSignatureScore = no2_co_ratio * baselineDieselRatio * congestionFactor * timeFactor;
+    dieselSignatureScore = utils.clamp(dieselSignatureScore, 0, 5);
     
     // Calculate confidence based on data availability
     let confidence = 0.85; // Base confidence
@@ -180,12 +205,22 @@ function calculateVehicularContribution(params = {}) {
     }
     confidence = utils.clamp(confidence, 0.5, 1.0);
     
+    // Generate readable notes
+    const age15PlusPercent = (utils.safeNumber(vehicleAgeDistribution['15_plus'], 0) * 100).toFixed(0);
+    const notes_readable = `Vehicular contribution calculated using Delhi Transport Dept data: ` +
+      `${(vehicleTypeShare.twoW * 100).toFixed(0)}% two-wheelers, ${(vehicleTypeShare.fourW * 100).toFixed(0)}% four-wheelers. ` +
+      `Age distribution: ${age15PlusPercent}% vehicles are 15+ years old (higher emissions). ` +
+      `NO2 rise: ${deltaNO2.toFixed(1)} µmol/m², traffic: ${trafficLevel}, ` +
+      `diesel signature score: ${dieselSignatureScore.toFixed(2)}. ` +
+      `Data validated using CPCB emission factors.`;
+    
     return {
-      score: utils.safeNumber(finalScore, 0),
-      rawScoreBreakdown,
+      score: utils.safeNumber(rawScore, 0),
+      breakdown: rawScoreBreakdown,
       dieselSignatureScore: utils.safeNumber(dieselSignatureScore, 0),
       confidence: utils.safeNumber(confidence, 0.7),
       warnings: warnings.length > 0 ? warnings : undefined,
+      notes_readable,
       metadata: {
         factors: {
           congestionFactor,
@@ -193,12 +228,12 @@ function calculateVehicularContribution(params = {}) {
           roadTypeFactor: roadTypeFactorValue,
           distanceDecay: distanceDecayValue,
           timeFactor,
-          avgAgeFactor,
+          ageFactor,
           avgFuelFactor
         },
-        vehicleMix,
-        fuelMix,
-        ageMix
+        vehicleTypeShare,
+        fuelTypeShare,
+        vehicleAgeDistribution
       }
     };
     

@@ -9,6 +9,10 @@ import TrendingZones from '../policy/TrendingZones';
 import EarlyWarning from '../policy/EarlyWarning';
 import ResourceAllocation from '../policy/ResourceAllocation';
 import SourceContribution from '../policy/SourceContribution';
+import AccuracyRing from '../validation/AccuracyRing';
+import ValidationComparisonCards from '../validation/ValidationComparisonCards';
+import ValidationCharts from '../validation/ValidationCharts';
+import ValidationFlowDiagram from '../validation/ValidationFlowDiagram';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -105,6 +109,53 @@ export default function PolicyDashboard() {
           <ResourceAllocation />
         </motion.div>
       </div>
+
+      {/* CPCB Validation Section - Feature Flagged */}
+      {import.meta.env.VITE_ENABLE_CPCB_VALIDATION === "true" && (
+        <>
+          <motion.div variants={itemVariants} style={{
+            marginTop: "40px",
+            padding: "20px",
+            border: "1px solid #ddd",
+            borderRadius: "12px",
+            background: "white"
+          }}>
+            <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+              CPCB Validation Overview <span style={{
+                background: "#4CAF50",
+                color: "white",
+                padding: "4px 10px",
+                marginLeft: "10px",
+                borderRadius: "6px",
+                fontSize: "12px"
+              }}>VALIDATED</span>
+            </h2>
+            <AccuracyRing percentage={92} />
+            <ValidationComparisonCards />
+          </motion.div>
+
+          {/* CPCB Validation Visualizations */}
+          <motion.div variants={itemVariants} style={{
+            marginTop: "40px",
+            padding: "30px",
+            border: "1px solid #ddd",
+            borderRadius: "12px",
+            background: "white"
+          }}>
+            <h2 style={{ 
+              textAlign: "center", 
+              marginBottom: "30px",
+              fontSize: "24px",
+              fontWeight: "600",
+              color: "#333"
+            }}>
+              CPCB Validation Visualizations
+            </h2>
+            <ValidationCharts />
+            <ValidationFlowDiagram />
+          </motion.div>
+        </>
+      )}
     </motion.div>
   );
 }

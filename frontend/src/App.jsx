@@ -10,6 +10,8 @@ import GreenPointsPage from './pages/GreenPointsPage';
 import AirShieldNavigator from './pages/airshield/AirShieldNavigator';
 import SafeRouteMap from './pages/SafeRouteMap';
 import SourceAnalysisPage from './pages/SourceAnalysisPage';
+import CPCBValidationPage from './pages/CPCBValidationPage';
+import ValidationPage from './pages/Validation';
 import StartPage from './pages/StartPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -19,8 +21,10 @@ import Footer from './components/common/Footer';
 import { useEffect } from 'react';
 import { addDailyLoginPoints } from './utils/pointsEngine';
 import { checkAchievements } from './utils/achievementsEngine';
-import { initTranslation } from './utils/translator/localTranslator';
+// Language translator disabled for Round 2
+// import { initTranslation } from './utils/translator/localTranslator';
 import { useFeatureFlags } from './hooks/useFeatureFlags';
+import { useAuth } from './hooks/useAuth';
 
 // Policy Pages
 import PolicyLoginNew from './policy/pages/PolicyLoginNew';
@@ -37,16 +41,18 @@ import PolicyProtectedRouteNew from './policy/components/PolicyProtectedRouteNew
 
 function App() {
   const flags = useFeatureFlags();
+  const { user, token } = useAuth();
+  
   // Daily login hook
   useEffect(() => {
     addDailyLoginPoints();
     checkAchievements('daily_login');
   }, []);
 
-  // Initialize translation system on app start
-  useEffect(() => {
-    initTranslation();
-  }, []);
+  // Language translator disabled for Round 2
+  // useEffect(() => {
+  //   initTranslation();
+  // }, []);
 
   return (
     <ThemeProvider>
@@ -112,6 +118,24 @@ function App() {
                 <Header />
                 <main className="flex-1">
                   <SourceAnalysisPage />
+                </main>
+                <Footer />
+              </div>
+            } />
+            <Route path="/cpcb-validation" element={
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1">
+                  <CPCBValidationPage />
+                </main>
+                <Footer />
+              </div>
+            } />
+            <Route path="/validation" element={
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1">
+                  <ValidationPage />
                 </main>
                 <Footer />
               </div>

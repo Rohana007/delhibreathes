@@ -14,7 +14,13 @@ router = APIRouter(prefix="/gamification", tags=["gamification"])
 
 def get_db(request: Request) -> AsyncIOMotorDatabase:
     """Get database from app state."""
-    return request.app.state.db
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database not available. Please ensure MongoDB is running and connected."
+        )
+    return db
 
 
 async def get_user_key(request: Request) -> str:

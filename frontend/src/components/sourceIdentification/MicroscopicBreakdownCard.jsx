@@ -2,28 +2,20 @@ import { useState } from 'react';
 
 const COLOR_CLASSES = {
   green: {
-    bg: 'bg-green-50 dark:bg-green-900/20',
-    border: 'border-green-200 dark:border-green-800',
-    text: 'text-green-800 dark:text-green-300',
-    header: 'text-green-700 dark:text-green-400',
+    borderLeft: 'border-l-[#2E7D32]',
+    text: 'text-[#2E7D32]',
   },
   orange: {
-    bg: 'bg-orange-50 dark:bg-orange-900/20',
-    border: 'border-orange-200 dark:border-orange-800',
-    text: 'text-orange-800 dark:text-orange-300',
-    header: 'text-orange-700 dark:text-orange-400',
+    borderLeft: 'border-l-[#EF6C00]',
+    text: 'text-[#EF6C00]',
   },
   blue: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    border: 'border-blue-200 dark:border-blue-800',
-    text: 'text-blue-800 dark:text-blue-300',
-    header: 'text-blue-700 dark:text-blue-400',
+    borderLeft: 'border-l-[#1565C0]',
+    text: 'text-[#1565C0]',
   },
   red: {
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-red-200 dark:border-red-800',
-    text: 'text-red-800 dark:text-red-300',
-    header: 'text-red-700 dark:text-red-400',
+    borderLeft: 'border-l-[#C62828]',
+    text: 'text-[#C62828]',
   },
 };
 
@@ -74,42 +66,42 @@ function MicroscopicBreakdownCard({ title, source, data, color = 'green' }) {
   const confidence = parseFloat(data?.confidence || 0) * 100;
 
   return (
-    <div className={`${colors.bg} ${colors.border} border rounded-lg p-4`}>
+    <div className={`bg-white shadow-sm border border-gray-200 rounded-xl p-5 text-black border-l-4 ${colors.borderLeft}`}>
       <div
         className="flex items-center justify-between cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <h3 className={`font-semibold ${colors.text} text-lg`}>{title}</h3>
-          <p className={`text-sm ${colors.header} mt-1`}>
+          <h3 className="font-semibold text-black text-lg mb-1">{title}</h3>
+          <p className="text-sm text-gray-600">
             Contribution: {contribution.toFixed(1)}% | Confidence: {confidence.toFixed(0)}%
           </p>
         </div>
-        <button className={`${colors.text} text-xl`}>
+        <button className={`${colors.text} text-xl font-bold`}>
           {isExpanded ? '−' : '+'}
         </button>
       </div>
 
       {isExpanded && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-5 space-y-4">
           {/* Reasoning Text */}
           {data?.reasoningText && (
-            <div className="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700">
-              <h4 className="font-semibold text-gray-800 dark:text-white mb-2">Why</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{data.reasoningText}</p>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-semibold text-black mb-2">Why</h4>
+              <p className="text-sm text-gray-700">{data.reasoningText}</p>
             </div>
           )}
 
           {/* Microscopic Indicators */}
           <div>
-            <h4 className={`font-semibold ${colors.text} mb-2`}>Microscopic Indicators</h4>
+            <h4 className={`font-semibold ${colors.text} mb-3`}>Microscopic Indicators</h4>
             <div className="space-y-2">
               {indicators.map((indicator, idx) => (
                 <div
                   key={idx}
-                  className="flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
+                  className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
                 >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{indicator.label}</span>
+                  <span className="text-sm text-gray-700">{indicator.label}</span>
                   <span className={`text-sm font-semibold ${colors.text}`}>{indicator.value}</span>
                 </div>
               ))}
@@ -119,14 +111,14 @@ function MicroscopicBreakdownCard({ title, source, data, color = 'green' }) {
           {/* Raw Score Breakdown (if available) */}
           {data?.rawScoreBreakdown && Object.keys(data.rawScoreBreakdown).length > 0 && (
             <div>
-              <h4 className={`font-semibold ${colors.text} mb-2`}>Score Breakdown</h4>
-              <div className="space-y-1">
+              <h4 className={`font-semibold ${colors.text} mb-3`}>Score Breakdown</h4>
+              <div className="space-y-2">
                 {Object.entries(data.rawScoreBreakdown).map(([key, value]) => (
                   <div
                     key={key}
-                    className="flex justify-between items-center text-sm bg-white dark:bg-gray-800 p-2 rounded"
+                    className="flex justify-between items-center text-sm bg-gray-50 p-3 rounded-lg"
                   >
-                    <span className="text-gray-700 dark:text-gray-300">{key}</span>
+                    <span className="text-gray-700">{key}</span>
                     <span className={`font-semibold ${colors.text}`}>
                       {typeof value === 'number' ? value.toFixed(2) : value}
                     </span>
@@ -139,14 +131,14 @@ function MicroscopicBreakdownCard({ title, source, data, color = 'green' }) {
           {/* Breakdown (for industrial/construction) */}
           {data?.breakdown && Object.keys(data.breakdown).length > 0 && (
             <div>
-              <h4 className={`font-semibold ${colors.text} mb-2`}>Source Breakdown</h4>
-              <div className="space-y-1">
+              <h4 className={`font-semibold ${colors.text} mb-3`}>Source Breakdown</h4>
+              <div className="space-y-2">
                 {Object.entries(data.breakdown).map(([key, value]) => (
                   <div
                     key={key}
-                    className="flex justify-between items-center text-sm bg-white dark:bg-gray-800 p-2 rounded"
+                    className="flex justify-between items-center text-sm bg-gray-50 p-3 rounded-lg"
                   >
-                    <span className="text-gray-700 dark:text-gray-300">{key}</span>
+                    <span className="text-gray-700">{key}</span>
                     <span className={`font-semibold ${colors.text}`}>
                       {typeof value === 'object' && value.contribution
                         ? value.contribution.toFixed(2)

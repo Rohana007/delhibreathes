@@ -2,8 +2,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useApp } from '../../context/AppContext';
-import PointsWidget from '../PointsWidget';
 import { useAuth } from '../../hooks/useAuth';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { 
   MdAir, 
   MdTimeline, 
@@ -29,6 +29,7 @@ const features = [
   { name: "Advisory", icon: FaNotesMedical, route: "/" },
   { name: "Safe Route", icon: FaRoute, route: "/" },
   { name: "Hotspots", icon: GiFireZone, route: "/" },
+  { name: "Validation", icon: MdAir, route: "/validation", navigate: true },
   { name: "Report Pollution", icon: MdReportProblem, route: "/", highlight: true }
 ];
 
@@ -37,6 +38,7 @@ export default function FeatureQuickActions({ scrollToSection: scrollToSectionPr
   const { theme } = useTheme();
   const { scrollToSection: scrollToSectionContext, setShowReportModal, mode } = useApp();
   const { user, token } = useAuth();
+  const flags = useFeatureFlags();
   const isDark = theme === 'dark';
 
   // Use prop if provided, otherwise use context
@@ -67,13 +69,20 @@ export default function FeatureQuickActions({ scrollToSection: scrollToSectionPr
         scrollToSection(sectionKey);
       }
     } else {
-      // Scroll to relevant section first
-      if (scrollToSection && sectionKey) {
-        scrollToSection(sectionKey);
-      }
-      // For routes that navigate away, still navigate (but after scroll)
-      if (route !== "/") {
+      // Check if this feature should navigate directly
+      const feature = features.find(f => f.name === name);
+      if (feature?.navigate) {
+        // Navigate directly without scrolling
         navigate(route);
+      } else {
+        // Scroll to relevant section first
+        if (scrollToSection && sectionKey) {
+          scrollToSection(sectionKey);
+        }
+        // For routes that navigate away, still navigate (but after scroll)
+        if (route !== "/") {
+          navigate(route);
+        }
       }
     }
   };
@@ -107,12 +116,15 @@ export default function FeatureQuickActions({ scrollToSection: scrollToSectionPr
           {features.map((feature, index) => {
             const Icon = feature.icon;
             const isHighlighted = feature.highlight;
+            const shouldHide = 
+              (feature.name === "Report Pollution" && !flags.showReportPollution) ||
+              (feature.name === "Historic Data" && !flags.showHistoricData);
             
             return (
               <motion.button
                 key={feature.name}
                 onClick={() => handleFeatureClick(feature.route, feature.name)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-sm whitespace-nowrap transition-all"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-sm whitespace-nowrap transition-all ${shouldHide ? 'hidden-feature' : ''}`}
                 style={{
                   backgroundColor: isHighlighted 
                     ? '#2563EB' 
@@ -159,16 +171,6 @@ export default function FeatureQuickActions({ scrollToSection: scrollToSectionPr
             );
           })}
           
-          {/* Green Points Widget - Beside Report Pollution */}
-          {token && user && mode === 'user' && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: features.length * 0.05 }}
-            >
-              <PointsWidget />
-            </motion.div>
-          )}
           </div>
         </div>
       </div>

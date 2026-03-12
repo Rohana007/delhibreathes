@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { getSafeRoute } from '../../services/api';
 import { getAqiColor, getAqiLabel, TRAVEL_MODES } from '../../utils/helpers';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 const PRESET_LOCATIONS = [
   { id: 'cp', name: 'Connaught Place', lat: 28.6315, lon: 77.2167 },
@@ -24,6 +25,7 @@ const PRESET_LOCATIONS = [
 
 export default function SafeRouteFinder() {
   const navigate = useNavigate();
+  const flags = useFeatureFlags();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [mode, setMode] = useState('car');
@@ -454,27 +456,29 @@ export default function SafeRouteFinder() {
             )}
 
             {/* Go to Maps Button - Below Route Details */}
-            <motion.button
-              onClick={() => navigate('/safe-route-map', { state: { routeData: result } })}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg transition-all"
-              style={{
-                background: 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
-                border: '2px solid #2563EB',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
-                color: '#000000',
-              }}
-              whileHover={{ 
-                scale: 1.02,
-                boxShadow: '0 6px 16px rgba(37, 99, 235, 0.3)',
-                borderColor: '#1E40AF',
-              }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <Map className="w-5 h-5" style={{ color: '#2563EB' }} />
-              <span style={{ color: '#000000', fontWeight: '700', fontSize: '15px' }}>Go to maps</span>
-            </motion.button>
+            {flags.showGoToMapsButton && (
+              <motion.button
+                onClick={() => navigate('/safe-route-map', { state: { routeData: result } })}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg transition-all"
+                style={{
+                  background: 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
+                  border: '2px solid #2563EB',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
+                  color: '#000000',
+                }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: '0 6px 16px rgba(37, 99, 235, 0.3)',
+                  borderColor: '#1E40AF',
+                }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Map className="w-5 h-5" style={{ color: '#2563EB' }} />
+                <span style={{ color: '#000000', fontWeight: '700', fontSize: '15px' }}>Go to maps</span>
+              </motion.button>
+            )}
 
             {/* Why Recommended Section */}
             {result.whyRecommended && (

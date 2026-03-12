@@ -8,6 +8,10 @@ import EarlyWarning from '../../components/policy/EarlyWarning';
 import ResourceAllocation from '../../components/policy/ResourceAllocation';
 import SourceContribution from '../../components/policy/SourceContribution';
 import PolicySimulatorCard from '../../components/policy/PolicySimulatorCard';
+import ReportsCard from '../../components/policy/ReportsCard';
+import AnalyticsCard from '../../components/policy/AnalyticsCard';
+import HotspotsCard from '../../components/policy/HotspotsCard';
+import SourceContributionCard from '../../components/policy/SourceContributionCard';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -37,10 +41,18 @@ export default function PolicyDashboard() {
         <PolicyOverview />
       </motion.div>
 
-      {/* Policy Simulator Card */}
-      <motion.div variants={itemVariants}>
-        <PolicySimulatorCard />
-      </motion.div>
+      {/* Policy Simulator, Reports, and Analytics Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <motion.div variants={itemVariants}>
+          <PolicySimulatorCard />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <ReportsCard />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <AnalyticsCard />
+        </motion.div>
+      </div>
 
       {/* GRAP Status and Early Warning */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -59,6 +71,16 @@ export default function PolicyDashboard() {
         </motion.div>
         <motion.div variants={itemVariants}>
           <TrendingZones />
+        </motion.div>
+      </div>
+
+      {/* Hotspots and Source Contribution Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div variants={itemVariants}>
+          <HotspotsCard />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <SourceContributionCard />
         </motion.div>
       </div>
 

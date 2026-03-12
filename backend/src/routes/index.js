@@ -52,6 +52,7 @@ router.get('/db/health', (req, res) => {
 router.get('/aqi', aqiController.getAQIByLocation);
 router.get('/aqi/ncr', aqiController.getAllNCRAQI);
 router.get('/aqi/current', aqiController.getCurrentAQIWithSource); // New: validated AQI with source detection
+router.get('/aqi/realtime', aqiController.getRealtimeAQI); // Real-time AQI from CPCB, AQICN, OpenWeather
 router.get('/aqi/station/:station', aqiController.getAQIByStation);
 router.get('/aqi/search', aqiController.searchStations);
 router.get('/aqi/health', aqiController.getHealthRecommendations);

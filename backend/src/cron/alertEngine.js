@@ -1,8 +1,8 @@
 const cron = require('node-cron');
 const User = require('../models/User');
 const aqiService = require('../services/aqiService');
-// Twilio imports removed - alerts will use alternative messaging if needed
-// const { sendSMS, sendWhatsApp } = require('../utils/twilio');
+const smsService = require('../services/smsService');
+const { sendWhatsAppMessage } = require('../utils/sendWhatsApp');
 const { formatAQIAlert } = require('../utils/alertFormatter');
 const config = require('../config');
 const logger = require('../utils/logger');

@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "source": "Delhi Transport Dept (processed), CPCB reports, IITD 2022-23",
+    "lastUpdated": "2025-12-08",
+    "notes": "Calibrated for Delhi NCR; use as baseline fleet composition."
+  },
+  "vehicleTypeShare": {
+    "twoW": 0.45,
+    "threeW": 0.06,
+    "fourW": 0.33,
+    "LCV": 0.06,
+    "HCV": 0.05,
+    "bus": 0.05
+  },
+  "fuelTypeShare": {
+    "petrol": 0.48,
+    "diesel": 0.32,
+    "CNG": 0.17,
+    "electric": 0.03
+  },
+  "vehicleAgeDistribution": {
+    "0_5": 0.28,
+    "5_10": 0.33,
+    "10_15": 0.21,
+    "15_plus": 0.18
+  },
+  "notes_readable": "This realistic baseline increases vehicular weights to reflect Delhi Transport Dept public statistics (2022-23)."
+}
+

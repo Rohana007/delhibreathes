@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Eye, Download } from 'lucide-react';
+import { useFeatureFlags } from '../../../hooks/useFeatureFlags';
 
 const getSeverityColor = (severity) => {
   const colors = {
@@ -13,6 +14,7 @@ const getSeverityColor = (severity) => {
 };
 
 export default function CitizenReportTable({ data, loading, onViewReport }) {
+  const flags = useFeatureFlags();
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   const sortedData = useMemo(() => {
@@ -53,6 +55,10 @@ export default function CitizenReportTable({ data, loading, onViewReport }) {
         </div>
       </motion.div>
     );
+  }
+
+  if (!flags.showCitizenReports) {
+    return null;
   }
 
   return (

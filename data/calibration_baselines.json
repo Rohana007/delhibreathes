@@ -1,0 +1,16 @@
+{
+  "expectedContributionRange": {
+    "vehicular": [0.30, 0.45],
+    "industrial": [0.15, 0.25],
+    "construction": [0.20, 0.30],
+    "biomass": [0.08, 0.20]
+  },
+  "calibrationFactors": {
+    "vehicularScale": 1.0,
+    "industrialScale": 1.0,
+    "constructionScale": 1.0,
+    "biomassScale": 1.0
+  },
+  "notes": "If outputs fall outside expected ranges, system will emit calibration warnings and apply smoothing."
+}
+

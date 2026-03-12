@@ -1,9 +1,5 @@
 .source-analysis-page {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #f7fafc, #edf2f7);
-}
-
-.dark .source-analysis-page {
-  background: linear-gradient(to bottom, #1a202c, #2d3748);
+  background: #FFFFFF;
 }
 

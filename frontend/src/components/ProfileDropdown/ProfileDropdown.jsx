@@ -5,10 +5,12 @@ import { User, Settings, FileText, LogOut, Award, Gift, ChevronDown } from 'luci
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { getGamificationSummary } from '../../services/api';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 export default function ProfileDropdown({ isOpen, onClose }) {
   const { user, token } = useAuth();
   const { theme } = useTheme();
+  const flags = useFeatureFlags();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const [summary, setSummary] = useState(null);
@@ -117,87 +119,89 @@ export default function ProfileDropdown({ isOpen, onClose }) {
             </div>
 
             {/* GP and Level Display */}
-            {loading ? (
-              <div className="mt-3 text-xs" style={{ color: textSubtle }}>
-                Loading...
-              </div>
-            ) : summary ? (
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium" style={{ color: textSubtle }}>
-                      Green Points:
-                    </span>
-                    <span className="text-sm font-bold" style={{ color: '#10B981' }}>
-                      {summary.gp || 0}
-                    </span>
-                  </div>
-                  <div
-                    className="px-2 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                      color: '#FFFFFF',
-                    }}
-                  >
-                    Level {summary.level || 1}
-                  </div>
+            {false && (
+              loading ? (
+                <div className="mt-3 text-xs" style={{ color: textSubtle }}>
+                  Loading...
                 </div>
-
-                {/* Badges Preview */}
-                {summary.badges && summary.badges.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Award className="w-3 h-3" style={{ color: '#FBBF24' }} />
-                    <div className="flex gap-1">
-                      {summary.badges.slice(0, 3).map((badge, idx) => (
-                        <div
-                          key={idx}
-                          className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center text-xs"
-                          style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)' }}
-                          title={badge}
-                        >
-                          🏆
-                        </div>
-                      ))}
-                      {summary.badges.length > 3 && (
-                        <span className="text-xs" style={{ color: textSubtle }}>
-                          +{summary.badges.length - 3}
-                        </span>
-                      )}
+              ) : summary ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium" style={{ color: textSubtle }}>
+                        Green Points:
+                      </span>
+                      <span className="text-sm font-bold" style={{ color: '#10B981' }}>
+                        {summary.gp || 0}
+                      </span>
+                    </div>
+                    <div
+                      className="px-2 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      Level {summary.level || 1}
                     </div>
                   </div>
-                )}
 
-                {/* Rewards Preview */}
-                {summary.rewards && summary.rewards.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Gift className="w-3 h-3" style={{ color: '#8B5CF6' }} />
-                    <div className="flex gap-1">
-                      {summary.rewards.slice(0, 3).map((reward, idx) => (
-                        <div
-                          key={idx}
-                          className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-xs"
-                          style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)' }}
-                          title={reward}
-                        >
-                          🎁
-                        </div>
-                      ))}
-                      {summary.rewards.length > 3 && (
-                        <span className="text-xs" style={{ color: textSubtle }}>
-                          +{summary.rewards.length - 3}
-                        </span>
-                      )}
+                  {/* Badges Preview */}
+                  {summary.badges && summary.badges.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Award className="w-3 h-3" style={{ color: '#FBBF24' }} />
+                      <div className="flex gap-1">
+                        {summary.badges.slice(0, 3).map((badge, idx) => (
+                          <div
+                            key={idx}
+                            className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center text-xs"
+                            style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)' }}
+                            title={badge}
+                          >
+                            🏆
+                          </div>
+                        ))}
+                        {summary.badges.length > 3 && (
+                          <span className="text-xs" style={{ color: textSubtle }}>
+                            +{summary.badges.length - 3}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="mt-3 flex items-center gap-2">
-                <Award className="w-4 h-4" style={{ color: '#10B981' }} />
-                <span className="text-sm font-semibold" style={{ color: '#10B981' }}>
-                  {user.greenPoints || 0} Green Points
-                </span>
-              </div>
+                  )}
+
+                  {/* Rewards Preview */}
+                  {summary.rewards && summary.rewards.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-3 h-3" style={{ color: '#8B5CF6' }} />
+                      <div className="flex gap-1">
+                        {summary.rewards.slice(0, 3).map((reward, idx) => (
+                          <div
+                            key={idx}
+                            className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-xs"
+                            style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)' }}
+                            title={reward}
+                          >
+                            🎁
+                          </div>
+                        ))}
+                        {summary.rewards.length > 3 && (
+                          <span className="text-xs" style={{ color: textSubtle }}>
+                            +{summary.rewards.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-3 flex items-center gap-2">
+                  <Award className="w-4 h-4" style={{ color: '#10B981' }} />
+                  <span className="text-sm font-semibold" style={{ color: '#10B981' }}>
+                    {user.greenPoints || 0} Green Points
+                  </span>
+                </div>
+              )
             )}
           </div>
 
@@ -229,19 +233,21 @@ export default function ProfileDropdown({ isOpen, onClose }) {
               <Settings className="w-4 h-4" />
               Edit Profile
             </button>
-            <button
-              onClick={() => {
-                onClose();
-                navigate('/my-reports');
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
-              style={{ color: textColor }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <FileText className="w-4 h-4" />
-              My Reports
-            </button>
+            <div className={!flags.showMyReports ? 'hidden-feature' : ''}>
+              <button
+                onClick={() => {
+                  onClose();
+                  navigate('/my-reports');
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+                style={{ color: textColor }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <FileText className="w-4 h-4" />
+                My Reports
+              </button>
+            </div>
             <div className="border-t my-1" style={{ borderColor: borderColor }} />
             <button
               onClick={handleLogout}

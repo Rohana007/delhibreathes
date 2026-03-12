@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 import { applyTranslation } from "../utils/translator/localTranslator";
+import { useFeatureFlags } from "../hooks/useFeatureFlags";
 
 export default function LanguageSwitcher() {
+  const flags = useFeatureFlags();
   const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
   const [open, setOpen] = useState(false);
 
@@ -38,7 +40,7 @@ export default function LanguageSwitcher() {
   }, [open]);
 
   return (
-    <div className="lang-switcher">
+    <div className={`lang-switcher ${!flags.showLanguage ? 'hidden-feature' : ''}`}>
       <button
         onClick={() => setOpen(!open)}
         className="lang-btn"

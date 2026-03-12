@@ -104,53 +104,81 @@ function calculateBurningContribution(params = {}) {
   const warnings = [];
   
   try {
-    // Load validation weights
-    const validationWeights = params.validationWeights || utils.loadJSONSafe('data/validationWeights.json', {});
-    const nasaWeight = utils.safeNumber(validationWeights.NASA, 0.90);
+    // Load calibration baselines
+    const calibrationBaselines = params.calibrationBaselines || utils.loadJSONSafe('data/calibration_baselines.json', {});
     
     // Validate inputs
     const lat = utils.safeNumber(params.lat, 28.6139);
     const lng = utils.safeNumber(params.lng, 77.2090);
     const searchRadiusKm = utils.safeNumber(params.searchRadiusKm, 10);
-    const useMockData = params.useMockData !== false; // Default to true
+    const windowHours = utils.safeNumber(params.windowHours, 72);
     
-    // Try to load FIRMS data
-    let firmsData = params.firmsData;
+    // Extract AQI data for burning pattern detection
+    const aqi = params.aqi || {};
+    const co = utils.safeNumber(aqi.co, 0);
+    const pm25 = utils.safeNumber(aqi.pm25, 0);
+    const pm10 = utils.safeNumber(aqi.pm10, 0);
     
-    if (!firmsData || !Array.isArray(firmsData) || firmsData.length === 0) {
-      // Try to load from file
-      firmsData = loadFIRMSData('data/firmsData.json');
+    // Try to load FIRMS data using robust loader
+    const firmsResult = utils.loadFIRMS(lat, lng, windowHours);
+    let firmsData = firmsResult.fires;
+    if (firmsResult.warnings && firmsResult.warnings.length > 0) {
+      warnings.push(...firmsResult.warnings);
+    }
+    
+    // If no FIRMS data, check for burning pattern from AQI signatures
+    let estimatedBurningScore = 0;
+    let hasBurningSignal = false;
+    
+    if ((!firmsData || firmsData.length === 0) && (co > 0 || pm25 > 0)) {
+      // Check for CO and PM spike pattern indicating burning
+      const coBaseline = 1.0;
+      const pmBaseline = 50;
+      const coRise = Math.max(0, co - coBaseline);
+      const pmRise = Math.max(0, pm25 - pmBaseline);
       
-      if (firmsData.length === 0 && useMockData) {
-        // Generate mock data for demo/testing
-        firmsData = generateMockFIRMSData(lat, lng, searchRadiusKm);
-        warnings.push('Using mock FIRMS data - real data not available');
+      // If CO rise >> baseline and PM rise high, estimate burning
+      if (coRise > coBaseline * 2 && pmRise > pmBaseline * 0.5) {
+        hasBurningSignal = true;
+        estimatedBurningScore = (coRise / coBaseline) * 0.1 + (pmRise / pmBaseline) * 0.2;
+        warnings.push('no_firms_data_but_burning_signal_detected');
       }
     }
     
-    // If still no data, return safe defaults
-    if (!firmsData || firmsData.length === 0) {
+    // If still no data and no signal, return safe defaults
+    if ((!firmsData || firmsData.length === 0) && !hasBurningSignal) {
+      warnings.push('no_firms_and_no_biomass_signal');
       return {
         score: 0,
         breakdown: {},
         confidence: 0.3,
-        warnings: ['No FIRMS fire data available - biomass burning contribution set to zero'],
+        warnings: warnings.length > 0 ? warnings : undefined,
+        notes_readable: 'No FIRMS fire data available and no biomass burning signal detected from AQI. Contribution set to zero.',
         metadata: {
           dataSource: 'none',
-          searchRadiusKm
+          searchRadiusKm,
+          nearbyFiresCount: 0
         }
       };
     }
     
-    // Find fires within search radius
+    // Find fires within search radius and time window
     const nearbyFires = [];
+    const cutoffTime = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+    
     for (const fire of firmsData) {
       try {
-        const fireLat = utils.safeNumber(fire.lat, 0);
-        const fireLng = utils.safeNumber(fire.lng, 0);
+        const fireLat = utils.safeNumber(fire.lat || fire.latitude, 0);
+        const fireLng = utils.safeNumber(fire.lng || fire.longitude, 0);
         
         if (fireLat === 0 || fireLng === 0) {
           continue; // Skip invalid coordinates
+        }
+        
+        // Check time window
+        const fireTime = new Date(fire.timestamp || fire.acq_date || fire.acq_time || Date.now());
+        if (fireTime < cutoffTime) {
+          continue; // Skip old fires
         }
         
         const distance = utils.haversineDistance(lat, lng, fireLat, fireLng);
@@ -158,7 +186,9 @@ function calculateBurningContribution(params = {}) {
         if (distance <= searchRadiusKm) {
           nearbyFires.push({
             ...fire,
-            distanceKm: distance
+            distanceKm: distance,
+            lat: fireLat,
+            lng: fireLng
           });
         }
       } catch (error) {
@@ -167,16 +197,45 @@ function calculateBurningContribution(params = {}) {
       }
     }
     
-    if (nearbyFires.length === 0) {
+    // Calculate fire intensity sum from nearby fires
+    let fireIntensitySum = 0;
+    for (const fire of nearbyFires) {
+      const intensity = utils.safeNumber(fire.intensity || fire.brightness || fire.confidence || 0.5, 0.5);
+      fireIntensitySum += intensity;
+    }
+    
+    // If no nearby fires but has burning signal, use estimated score
+    if (nearbyFires.length === 0 && hasBurningSignal) {
+      const biomassScale = utils.safeNumber(calibrationBaselines.calibrationFactors?.biomassScale, 1.0);
+      const finalScore = estimatedBurningScore * biomassScale;
+      
+      return {
+        score: utils.safeNumber(finalScore, 0),
+        breakdown: { estimated_from_aqi: finalScore },
+        confidence: 0.4, // Lower confidence for estimated
+        warnings: warnings.length > 0 ? warnings : undefined,
+        notes_readable: `No FIRMS fires detected, but CO and PM spike pattern suggests biomass burning. Estimated score: ${finalScore.toFixed(2)}.`,
+        metadata: {
+          dataSource: 'estimated',
+          searchRadiusKm,
+          nearbyFiresCount: 0,
+          estimatedFromAQI: true
+        }
+      };
+    }
+    
+    if (nearbyFires.length === 0 && !hasBurningSignal) {
       return {
         score: 0,
         breakdown: {},
         confidence: 0.5,
-        warnings: [`No fire hotspots found within ${searchRadiusKm} km radius`],
+        warnings: warnings.length > 0 ? warnings : undefined,
+        notes_readable: `No fire hotspots found within ${searchRadiusKm} km radius in last ${windowHours} hours.`,
         metadata: {
-          dataSource: firmsData[0]?.timestamp ? 'firms' : 'mock',
+          dataSource: firmsData.length > 0 ? 'firms' : 'none',
           searchRadiusKm,
-          totalFiresInData: firmsData.length
+          totalFiresInData: firmsData.length,
+          nearbyFiresCount: 0
         }
       };
     }
@@ -223,40 +282,46 @@ function calculateBurningContribution(params = {}) {
       }
     }
     
-    // Apply validation weight
-    const finalScore = totalScore * nasaWeight;
+    // Apply calibration scale
+    const biomassScale = utils.safeNumber(calibrationBaselines.calibrationFactors?.biomassScale, 1.0);
+    const finalScore = totalScore * biomassScale;
     
     // Calculate confidence
     let confidence = 0.75;
-    if (nearbyFires.length === 0) {
-      confidence = 0.3;
-    } else if (nearbyFires.length < 2) {
+    if (nearbyFires.length < 2) {
       confidence = 0.6;
     }
     
-    // Lower confidence if using mock data
-    if (warnings.some(w => w.includes('mock'))) {
+    // Lower confidence if using estimated data
+    if (hasBurningSignal && nearbyFires.length === 0) {
+      confidence = 0.4;
+    }
+    
+    // Lower confidence if no FIRMS data
+    if (warnings.some(w => w.includes('no_firms'))) {
       confidence = Math.max(0.3, confidence - 0.2);
     }
     
-    // Lower confidence if data source is uncertain
-    const dataSource = firmsData[0]?.timestamp ? 'firms' : 'mock';
-    if (dataSource === 'mock') {
-      confidence = Math.max(0.3, confidence - 0.15);
-    }
-    
     confidence = utils.clamp(confidence, 0.3, 1.0);
+    
+    // Generate readable notes
+    const dataSource = firmsData.length > 0 && firmsData[0].timestamp ? 'firms' : 'estimated';
+    const notes_readable = `Biomass burning from ${nearbyFires.length} fire hotspots within ${searchRadiusKm} km (last ${windowHours}h). ` +
+      `Fire intensity sum: ${fireIntensitySum.toFixed(2)}. ` +
+      `Data source: ${dataSource === 'firms' ? 'NASA FIRMS satellite data' : 'estimated from AQI patterns'}.`;
     
     return {
       score: utils.safeNumber(finalScore, 0),
       breakdown,
       confidence: utils.safeNumber(confidence, 0.5),
       warnings: warnings.length > 0 ? warnings : undefined,
+      notes_readable,
       metadata: {
         nearbyFiresCount: nearbyFires.length,
         searchRadiusKm,
         totalFiresInData: firmsData.length,
-        dataSource
+        dataSource,
+        fireIntensitySum
       }
     };
     

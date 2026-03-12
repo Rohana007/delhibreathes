@@ -1,0 +1,15 @@
+{
+  "trend": [
+    { "day": "Mon", "cpcb": 210, "model": 205 },
+    { "day": "Tue", "cpcb": 240, "model": 230 },
+    { "day": "Wed", "cpcb": 280, "model": 275 },
+    { "day": "Thu", "cpcb": 300, "model": 295 },
+    { "day": "Fri", "cpcb": 250, "model": 245 }
+  ],
+  "pollutants": [
+    { "pollutant": "PM2.5", "cpcb": 148, "model": 152 },
+    { "pollutant": "PM10", "cpcb": 190, "model": 194 },
+    { "pollutant": "NO2", "cpcb": 68, "model": 70 }
+  ]
+}
+

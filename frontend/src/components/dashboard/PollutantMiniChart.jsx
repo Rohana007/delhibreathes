@@ -16,7 +16,7 @@ const CPCB_LIMITS = {
 // Pollutant order for display
 const POLLUTANT_ORDER = ['pm25', 'pm10', 'no2', 'o3', 'so2', 'co', 'nh3'];
 
-// Clamp function helper
+// Clamp helper
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export default function PollutantMiniChart({ data }) {
@@ -33,17 +33,15 @@ export default function PollutantMiniChart({ data }) {
 
       if (value == null || !info || !limit) return null;
 
-      // Calculate percentage relative to CPCB limit
       const percentage = (value / limit) * 100;
 
-      // Determine color based on percentage
       let color;
       if (percentage <= 70) {
-        color = '#33cc66'; // Green - Safe
+        color = '#33cc66';  // Safe
       } else if (percentage <= 100) {
-        color = '#ffcc33'; // Yellow - Near limit
+        color = '#ffcc33';  // Near limit
       } else {
-        color = '#ff4d4d'; // Red - Exceeds limit
+        color = '#ff4d4d';  // Exceeds limit
       }
 
       return {
@@ -61,12 +59,13 @@ export default function PollutantMiniChart({ data }) {
   if (!chartData || chartData.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-xs" style={{ color: '#64748B' }}>Pollutant data unavailable</p>
+        <p className="text-xs" style={{ color: '#64748B' }}>
+          Pollutant data unavailable
+        </p>
       </div>
     );
   }
 
-  // Find max percentage for scaling (cap at 150% for better visualization)
   const maxPercentage = Math.max(...chartData.map(item => item.percentage), 150);
 
   const textColor = theme === 'dark' ? '#E0E0E0' : '#0F172A';
@@ -77,15 +76,13 @@ export default function PollutantMiniChart({ data }) {
   return (
     <div className="pollutant-bars-container">
       {chartData.map((item, index) => {
-        // Calculate bar width with clamp to ensure it fits (5% min, 100% max)
         const barWidthPercent = clamp((item.percentage / maxPercentage) * 100, 5, 100);
-        
+
         let statusText;
         if (item.percentage > 100) {
           statusText = `(Exceeds CPCB Limit by ${item.percentage - 100}%)`;
         } else if (item.percentage > 70) {
-          const belowBy = Math.round(100 - item.percentage);
-          statusText = `(${belowBy}% below CPCB Limit)`;
+          statusText = `(${Math.round(100 - item.percentage)}% below CPCB Limit)`;
         } else {
           statusText = '(Within CPCB Limit)';
         }
@@ -101,12 +98,8 @@ export default function PollutantMiniChart({ data }) {
             <span className="pollutant-label" style={{ color: textColor }}>
               {item.name}
             </span>
-            <div 
-              className="pollutant-bar-wrap"
-              style={{ 
-                backgroundColor: barBg,
-              }}
-            >
+
+            <div className="pollutant-bar-wrap" style={{ backgroundColor: barBg }}>
               <div
                 className="pollutant-bar"
                 style={{
@@ -115,6 +108,7 @@ export default function PollutantMiniChart({ data }) {
                 }}
               />
             </div>
+
             {hoveredIndex === index && (
               <div
                 className="pollutant-tooltip"
@@ -122,8 +116,8 @@ export default function PollutantMiniChart({ data }) {
                   backgroundColor: tooltipBg,
                   borderColor: tooltipBorder,
                   color: textColor,
-                  top: index === 0 ? '24px' : '-40px', // Show below for first item (PM2.5), above for others
-                  zIndex: 1000, // Ensure it's above everything
+                  top: index === 0 ? '24px' : '-40px',
+                  zIndex: 1000,
                 }}
               >
                 <p className="text-xs font-semibold leading-tight">
@@ -134,11 +128,11 @@ export default function PollutantMiniChart({ data }) {
           </div>
         );
       })}
+
+      {/* Inline CSS */}
       <style>{`
         .pollutant-bars-container {
           width: 100%;
-          padding: 0;
-          box-sizing: border-box;
           display: flex;
           flex-direction: column;
           gap: 8px;
@@ -152,42 +146,32 @@ export default function PollutantMiniChart({ data }) {
           gap: 10px;
           width: 100%;
           position: relative;
-          min-width: 0;
         }
         .pollutant-label {
           min-width: 55px;
           max-width: 55px;
           font-size: 12px;
-          flex-shrink: 0;
-          text-align: left;
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          white-space: nowrap;
         }
         .pollutant-bar-wrap {
           flex: 1;
           height: 8px;
           border-radius: 6px;
           overflow: hidden;
-          max-width: 100%;
-          min-width: 0;
-          position: relative;
-          background: transparent;
         }
         .pollutant-bar {
           height: 100%;
           border-radius: 6px;
           transition: width 0.3s ease;
-          min-width: 2px;
         }
         .pollutant-tooltip {
           position: absolute;
-          z-index: 1000;
           padding: 8px 12px;
           border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           border: 1px solid;
-          pointer-events: none;
           white-space: nowrap;
           left: 50%;
           transform: translateX(-50%);
@@ -202,12 +186,8 @@ export default function PollutantMiniChart({ data }) {
           .pollutant-bar-wrap {
             height: 6px;
           }
-          .pollutant-row {
-            gap: 8px;
-          }
         }
       `}</style>
     </div>
   );
 }
-

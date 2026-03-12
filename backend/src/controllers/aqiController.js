@@ -235,6 +235,51 @@ exports.searchStations = async (req, res) => {
 };
 
 /**
+ * Get real-time AQI from multiple sources (CPCB, AQICN, OpenWeather)
+ * GET /aqi/realtime?lat={lat}&lon={lon}
+ * Returns synchronized bundle with 2-minute refresh cycle
+ */
+exports.getRealtimeAQI = async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    
+    if (!lat || !lon) {
+      return res.status(400).json({
+        success: false,
+        error: 'Latitude and longitude are required',
+      });
+    }
+
+    const realtimeAqiService = require('../services/realtimeAqiService');
+    const bundle = await realtimeAqiService.getRealtimeAQI(
+      parseFloat(lat),
+      parseFloat(lon)
+    );
+
+    // Return bundle wrapped in standard response format
+    res.json({
+      success: true,
+      ...bundle, // Spread bundle properties (timestamp_global, datasets, warnings)
+    });
+  } catch (error) {
+    logger.error(`Realtime AQI fetch error: ${error.message}`);
+    // Never throw - return error in bundle format
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch real-time AQI data',
+      message: error.message,
+      timestamp_global: new Date().toISOString(),
+      datasets: {
+        cpcb: { aqi: null, pollutants: {}, timestamp: null, status: 'error', freshness: 'very_stale' },
+        aqicn: { aqi: null, pollutants: {}, timestamp: null, status: 'error', freshness: 'very_stale' },
+        openweather: { aqi: null, pollutants: {}, timestamp: null, status: 'error', freshness: 'very_stale' },
+      },
+      warnings: [`Backend error: ${error.message}`],
+    });
+  }
+};
+
+/**
  * Get health recommendations
  */
 exports.getHealthRecommendations = async (req, res) => {

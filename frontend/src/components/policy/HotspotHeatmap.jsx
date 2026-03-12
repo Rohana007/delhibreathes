@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, AlertCircle, Wind, Navigation, Factory, Truck, Construction, CloudFog } from 'lucide-react';
+import { Flame, AlertCircle, Wind, Navigation, Factory, Truck, Construction, CloudFog, Info } from 'lucide-react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { getHotspots, getThermalFireLayer, getConstructionDustHotspots, getCategoryHotspots } from '../../services/api';
+import { getImpactDirection, getImpactCone, determineFallbackSource, computeConfidenceScore } from '../../utils/hotspotEngine';
+import HotspotInfoModal from '../Citizen/HotspotInfoModal';
+import '../../styles/hotspots.css';
 import 'leaflet/dist/leaflet.css';
 
 const center = [28.55, 77.25];
@@ -158,7 +161,7 @@ const getFallbackHotspotData = (type) => {
           latitude: 28.5700,
           longitude: 77.0000,
           sourceType: 'construction',
-          sourceIcon: '🚧',
+          sourceIcon: '🏗',
           sourceLabel: 'Construction Dust Hotspot',
           zoneName: 'Dwarka Expressway',
           pm10Pm25Ratio: 2.8,
@@ -175,7 +178,7 @@ const getFallbackHotspotData = (type) => {
           latitude: 28.6130,
           longitude: 77.2290,
           sourceType: 'construction',
-          sourceIcon: '🚧',
+          sourceIcon: '🏗',
           sourceLabel: 'Construction Dust Hotspot',
           zoneName: 'Central Vista',
           pm10Pm25Ratio: 2.5,
@@ -192,7 +195,7 @@ const getFallbackHotspotData = (type) => {
           latitude: 28.5000,
           longitude: 77.4300,
           sourceType: 'construction',
-          sourceIcon: '🚧',
+          sourceIcon: '🏗',
           sourceLabel: 'Construction Dust Hotspot',
           zoneName: 'Noida Extension',
           pm10Pm25Ratio: 2.3,
@@ -259,7 +262,144 @@ const getFallbackHotspotData = (type) => {
     };
 };
 
+// Component for animated wind direction arrows around hotspots - SVG stroke with transparent background
+function AnimatedWindArrow({ hotspot, windDeg }) {
+  const map = useMap();
+  const [position, setPosition] = useState(null);
+
+  useEffect(() => {
+    if (!hotspot || !map) return;
+
+    const updatePosition = () => {
+      const point = map.latLngToContainerPoint([hotspot.latitude, hotspot.longitude]);
+      setPosition(point);
+    };
+
+    updatePosition();
+
+    map.on('move', updatePosition);
+    map.on('zoom', updatePosition);
+    map.on('viewreset', updatePosition);
+
+    return () => {
+      map.off('move', updatePosition);
+      map.off('zoom', updatePosition);
+      map.off('viewreset', updatePosition);
+    };
+  }, [hotspot, map]);
+
+  if (!position || windDeg === null || windDeg === undefined) return null;
+
+  const direction = getImpactDirection(windDeg);
+  const angle = (direction * Math.PI) / 180;
+  const length = 35; // Smaller, cleaner arrows
+  const endX = position.x + Math.cos(angle) * length;
+  const endY = position.y + Math.sin(angle) * length;
+  const arrowId = `arrowHead-${hotspot.id || hotspot.latitude}-${hotspot.longitude}`;
+
+  return (
+    <div
+      className="wind-arrow"
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1000,
+      }}
+    >
+      <svg
+        className="wind-arrow-svg"
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          background: 'transparent',
+        }}
+      >
+        <defs>
+          <marker
+            id={arrowId}
+            orient="auto"
+            markerWidth="5"
+            markerHeight="5"
+            refX="4"
+            refY="2.5"
+          >
+            <path d="M0,0 L0,5 L5,2.5 z" fill="#ff7f2a" />
+          </marker>
+        </defs>
+        <line
+          x1={position.x}
+          y1={position.y}
+          x2={endX}
+          y2={endY}
+          stroke="#ff7f2a"
+          strokeWidth="2"
+          markerEnd={`url(#${arrowId})`}
+          className="animate-arrow"
+          fill="none"
+        />
+      </svg>
+    </div>
+  );
+}
+
+// Component for info icon overlay on hotspot
+function HotspotInfoIcon({ hotspot, onClick }) {
+  const map = useMap();
+  const [position, setPosition] = useState(null);
+
+  useEffect(() => {
+    if (hotspot && map) {
+      const point = map.latLngToContainerPoint([hotspot.latitude, hotspot.longitude]);
+      setPosition(point);
+    }
+  }, [hotspot, map]);
+
+  useEffect(() => {
+    const handleMove = () => {
+      if (hotspot && map) {
+        const point = map.latLngToContainerPoint([hotspot.latitude, hotspot.longitude]);
+        setPosition(point);
+      }
+    };
+
+    map.on('move', handleMove);
+    map.on('zoom', handleMove);
+
+    return () => {
+      map.off('move', handleMove);
+      map.off('zoom', handleMove);
+    };
+  }, [hotspot, map]);
+
+  if (!position) return null;
+
+  return (
+    <div
+      className="hotspot-info-icon"
+      style={{
+        left: `${position.x + 20}px`,
+        top: `${position.y - 10}px`,
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      <Info className="w-4 h-4" style={{ color: '#2563EB' }} />
+    </div>
+  );
+}
+
 export default function HotspotHeatmap() {
+  const [selectedHotspot, setSelectedHotspot] = useState(null);
+  const [hotspotModalData, setHotspotModalData] = useState(null);
   const [viirsData, setViirsData] = useState(null);
   const [modisData, setModisData] = useState(null);
   const [constructionData, setConstructionData] = useState(null);
@@ -419,10 +559,11 @@ export default function HotspotHeatmap() {
     longitude: h.lng,
     category: h.category,
     sourceType: h.category,
-    sourceIcon: h.category === 'traffic' ? '🚗' : h.category === 'industrial' ? '🏭' : '💨',
+    sourceIcon: h.category === 'traffic' ? '🚗' : h.category === 'industrial' ? '🏭' : h.category === 'dust' ? '🛣' : '❓',
     sourceLabel: h.category === 'traffic' ? 'Traffic Pollution Hotspot' : 
                  h.category === 'industrial' ? 'Industrial Pollution Hotspot' : 
-                 'Road/Construction Dust Hotspot',
+                 h.category === 'dust' ? 'Road/Construction Dust Hotspot' :
+                 'Unknown Pollution Hotspot',
     dataSource: h.category === 'traffic' ? 'NASA OMI NO₂' : 
                 h.category === 'industrial' ? 'NASA GIBS SO₂' : 
                 'MODIS AOD Deep Blue',
@@ -533,7 +674,7 @@ export default function HotspotHeatmap() {
               border: '1px solid rgba(0,0,0,0.08)'
             }}
           >
-            <span>🚧</span>
+            <span>🏗</span>
             <span>Construction Dust Hotspots</span>
             <span className="text-xs opacity-75">({finalConstructionData?.summary?.total || 0})</span>
           </button>
@@ -613,19 +754,62 @@ export default function HotspotHeatmap() {
           
           <HeatmapLayer hotspots={allHotspots} />
 
-          {/* Wind Drift Arrows */}
+          {/* Wind Drift Arrows (existing) */}
           {showDriftArrows && allHotspots?.map((hotspot, index) => (
             <WindDriftArrow key={`drift-${index}`} hotspot={hotspot} />
           ))}
 
+          {/* Animated Wind Direction Arrows around each hotspot */}
+          {windData && allHotspots?.map((hotspot, index) => {
+            const windDeg = windData.direction || 270;
+            return (
+              <AnimatedWindArrow
+                key={`wind-arrow-${index}`}
+                hotspot={hotspot}
+                windDeg={windDeg}
+              />
+            );
+          })}
+
           {/* VIIRS Fire Layer - 🔥 emoji markers */}
-          {showViirsLayer && finalViirsData?.hotspots?.map((hotspot, index) => (
-            <Marker
-              key={`viirs-${index}`}
-              position={[hotspot.latitude, hotspot.longitude]}
-              icon={createEmojiIcon('🔥', 28)}
-            >
-              <Popup>
+          {showViirsLayer && finalViirsData?.hotspots?.map((hotspot, index) => {
+            const windDeg = windData?.direction || 270;
+            const direction = getImpactDirection(windDeg);
+            const cone = getImpactCone(direction);
+            const fallback = determineFallbackSource({
+              realSource: hotspot.sourceLabel || hotspot.sourceType,
+              modis: { aod: null },
+              fires: { count: 0 },
+              traffic: hotspot.category === 'traffic' ? 'high' : null,
+              industry: { upwind: hotspot.category === 'industrial' },
+            });
+            const confidence = computeConfidenceScore({
+              modis: { aod: null },
+              fires: { count: 0 },
+              consistency: 'moderate',
+            });
+
+            return (
+              <Marker
+                key={`viirs-${index}`}
+                position={[hotspot.latitude, hotspot.longitude]}
+                icon={createEmojiIcon('🔥', 28)}
+              >
+                <HotspotInfoIcon
+                  hotspot={hotspot}
+                  onClick={() => {
+                    setSelectedHotspot(hotspot);
+                    setHotspotModalData({
+                      fallbackSource: fallback,
+                      windDirection: direction,
+                      modis: { aod: null, aod_class: null },
+                      fires: { count: 0, fire_points: [] },
+                      confidence: confidence,
+                      impactCone: cone,
+                    });
+                  }}
+                />
+                <Popup>
                 <div className="min-w-[220px] p-2">
                   <h4 className="font-bold text-base mb-2 flex items-center gap-2 text-[#C76A1C]">
                     <span className="text-xl">🔥</span>
@@ -683,16 +867,48 @@ export default function HotspotHeatmap() {
                 </div>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
 
           {/* MODIS Thermal Fire Layer - 🔥 emoji markers */}
-          {showModisLayer && finalModisData?.hotspots?.map((hotspot, index) => (
-            <Marker
-              key={`modis-${index}`}
-              position={[hotspot.latitude, hotspot.longitude]}
-              icon={createEmojiIcon('🔥', 28)}
-            >
-              <Popup>
+          {showModisLayer && finalModisData?.hotspots?.map((hotspot, index) => {
+            const windDeg = windData?.direction || 270;
+            const direction = getImpactDirection(windDeg);
+            const cone = getImpactCone(direction);
+            const fallback = determineFallbackSource({
+              realSource: hotspot.sourceLabel || hotspot.sourceType,
+              modis: { aod: 0.5 },
+              fires: { count: 1 },
+              traffic: null,
+              industry: null,
+            });
+            const confidence = computeConfidenceScore({
+              modis: { aod: 0.5 },
+              fires: { count: 1 },
+              consistency: 'moderate',
+            });
+
+            return (
+              <Marker
+                key={`modis-${index}`}
+                position={[hotspot.latitude, hotspot.longitude]}
+                icon={createEmojiIcon('🔥', 28)}
+              >
+                <HotspotInfoIcon
+                  hotspot={hotspot}
+                  onClick={() => {
+                    setSelectedHotspot(hotspot);
+                    setHotspotModalData({
+                      fallbackSource: fallback,
+                      windDirection: direction,
+                      modis: { aod: 0.5, aod_class: 'moderate' },
+                      fires: { count: 1, fire_points: [] },
+                      confidence: confidence,
+                      impactCone: cone,
+                    });
+                  }}
+                />
+                <Popup>
                 <div className="min-w-[220px] p-2">
                   <h4 className="font-bold text-base mb-2 flex items-center gap-2 text-[#C76A1C]">
                     <span className="text-xl">🔥</span>
@@ -744,16 +960,48 @@ export default function HotspotHeatmap() {
                 </div>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
 
           {/* Category Hotspots (Traffic, Industrial, Dust) - using same marker style */}
-          {categoryHotspotsFormatted && categoryHotspotsFormatted.length > 0 && categoryHotspotsFormatted.map((hotspot, index) => (
-            <Marker
-              key={`category-${hotspot.id || index}`}
-              position={[hotspot.latitude, hotspot.longitude]}
-              icon={createEmojiIcon(hotspot.sourceIcon, 28)}
-            >
-              <Popup>
+          {categoryHotspotsFormatted && categoryHotspotsFormatted.length > 0 && categoryHotspotsFormatted.map((hotspot, index) => {
+            const windDeg = windData?.direction || 270;
+            const direction = getImpactDirection(windDeg);
+            const cone = getImpactCone(direction);
+            const fallback = determineFallbackSource({
+              realSource: hotspot.sourceLabel || hotspot.sourceType,
+              modis: { aod: null },
+              fires: { count: 0 },
+              traffic: hotspot.category === 'traffic' ? 'high' : null,
+              industry: { upwind: hotspot.category === 'industrial' },
+            });
+            const confidence = computeConfidenceScore({
+              modis: { aod: null },
+              fires: { count: 0 },
+              consistency: 'moderate',
+            });
+
+            return (
+              <Marker
+                key={`category-${hotspot.id || index}`}
+                position={[hotspot.latitude, hotspot.longitude]}
+                icon={createEmojiIcon(hotspot.sourceIcon, 28)}
+              >
+                <HotspotInfoIcon
+                  hotspot={hotspot}
+                  onClick={() => {
+                    setSelectedHotspot(hotspot);
+                    setHotspotModalData({
+                      fallbackSource: fallback,
+                      windDirection: direction,
+                      modis: { aod: null, aod_class: null },
+                      fires: { count: 0, fire_points: [] },
+                      confidence: confidence,
+                      impactCone: cone,
+                    });
+                  }}
+                />
+                <Popup>
                 <div className="min-w-[220px] p-2">
                   <h4 className="font-bold text-base mb-2 flex items-center gap-2" style={{ color: hotspot.category === 'traffic' ? '#3B82F6' : hotspot.category === 'industrial' ? '#8B5CF6' : '#A16207' }}>
                     <span className="text-xl">{hotspot.sourceIcon}</span>
@@ -778,19 +1026,51 @@ export default function HotspotHeatmap() {
                 </div>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
 
           {/* Construction Dust Layer - 🚧 emoji markers */}
-          {showConstructionLayer && finalConstructionData?.hotspots?.map((hotspot, index) => (
-            <Marker
-              key={`construction-${index}`}
-              position={[hotspot.latitude, hotspot.longitude]}
-              icon={createEmojiIcon('🚧', 32)}
-            >
-              <Popup>
+          {showConstructionLayer && finalConstructionData?.hotspots?.map((hotspot, index) => {
+            const windDeg = windData?.direction || 270;
+            const direction = getImpactDirection(windDeg);
+            const cone = getImpactCone(direction);
+            const fallback = determineFallbackSource({
+              realSource: hotspot.sourceLabel || hotspot.detectedFrom,
+              modis: { aod: null },
+              fires: { count: 0 },
+              traffic: null,
+              industry: null,
+            });
+            const confidence = computeConfidenceScore({
+              modis: { aod: null },
+              fires: { count: 0 },
+              consistency: 'moderate',
+            });
+
+            return (
+              <Marker
+                key={`construction-${index}`}
+                position={[hotspot.latitude, hotspot.longitude]}
+                icon={createEmojiIcon('🏗', 32)}
+              >
+                <HotspotInfoIcon
+                  hotspot={hotspot}
+                  onClick={() => {
+                    setSelectedHotspot(hotspot);
+                    setHotspotModalData({
+                      fallbackSource: fallback,
+                      windDirection: direction,
+                      modis: { aod: null, aod_class: null },
+                      fires: { count: 0, fire_points: [] },
+                      confidence: confidence,
+                      impactCone: cone,
+                    });
+                  }}
+                />
+                <Popup>
                 <div className="min-w-[220px] p-2">
                   <h4 className="font-bold text-base mb-2 flex items-center gap-2 text-amber-600">
-                    <span className="text-xl">🚧</span>
+                    <span className="text-xl">🏗</span>
                     Construction Dust Hotspot
                   </h4>
                   <div className="space-y-1.5 text-sm">
@@ -845,7 +1125,8 @@ export default function HotspotHeatmap() {
                 </div>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
         </MapContainer>
       </div>
 
@@ -861,7 +1142,7 @@ export default function HotspotHeatmap() {
             <span className="text-gray-400">High-Res Fire (VIIRS)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-base">🚧</span>
+            <span className="text-base">🏗</span>
             <span className="text-gray-400">Construction Dust</span>
           </div>
           <div className="flex items-center gap-2">
@@ -915,6 +1196,23 @@ export default function HotspotHeatmap() {
             </span>
           </div>
         </div>
+      )}
+
+      {/* Hotspot Info Modal */}
+      {selectedHotspot && hotspotModalData && (
+        <HotspotInfoModal
+          hotspot={selectedHotspot}
+          fallbackSource={hotspotModalData.fallbackSource}
+          windDirection={hotspotModalData.windDirection}
+          modis={hotspotModalData.modis}
+          fires={hotspotModalData.fires}
+          confidence={hotspotModalData.confidence}
+          impactCone={hotspotModalData.impactCone}
+          onClose={() => {
+            setSelectedHotspot(null);
+            setHotspotModalData(null);
+          }}
+        />
       )}
     </motion.div>
   );

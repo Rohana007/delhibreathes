@@ -12,7 +12,13 @@ router = APIRouter(prefix="/user/alerts", tags=["Alerts"])
 
 def get_db(request: Request) -> AsyncIOMotorDatabase:
     """Get database from app state."""
-    return request.app.state.db
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database not available. Please ensure MongoDB is running and connected."
+        )
+    return db
 
 
 async def get_current_user(request: Request) -> Dict[str, Any]:
@@ -40,15 +46,68 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
     
     try:
         # Use the same JWT secret as the Node.js backend
+        # Try multiple sources: environment, backend/.env, or default
         secret = os.getenv("JWT_SECRET") or os.getenv("VERIFICATION_TOKEN_SECRET")
+        
+        # If not found, try to load from backend/.env (multiple possible paths)
         if not secret:
-            # Fallback to default for local development
+            try:
+                from dotenv import dotenv_values
+                # Try multiple possible paths
+                possible_paths = [
+                    os.path.join(os.path.dirname(os.path.dirname(__file__)), "backend", ".env"),
+                    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend", ".env"),
+                    os.path.join(os.getcwd(), "backend", ".env"),
+                ]
+                
+                for backend_env_path in possible_paths:
+                    if os.path.exists(backend_env_path):
+                        backend_env = dotenv_values(backend_env_path)
+                        secret = backend_env.get("JWT_SECRET") or backend_env.get("VERIFICATION_TOKEN_SECRET")
+                        if secret:
+                            print(f"[OK] Loaded JWT_SECRET from: {backend_env_path}")
+                            break
+            except Exception as e:
+                print(f"[WARN] Could not load JWT_SECRET from backend/.env: {e}")
+        
+        # Final fallback to default for local development
+        if not secret:
             secret = "localtestsecret"
             print(f"[WARN] JWT_SECRET not configured. Using default secret for local development.")
-            print("[INFO] Set JWT_SECRET in .env file for production.")
+            print("[INFO] Set JWT_SECRET in .env or backend/.env file for production.")
         
-        # Decode JWT token
-        decoded = jwt.decode(token, secret, algorithms=["HS256"])
+        # Decode JWT token with proper error handling
+        try:
+            # First, try to decode without verification to see the payload (for debugging)
+            decoded_unverified = jwt.decode(token, options={"verify_signature": False})
+            print(f"[DEBUG] Token payload: userId={decoded_unverified.get('userId')}, email={decoded_unverified.get('email')}")
+            
+            # Now decode with verification
+            decoded = jwt.decode(token, secret, algorithms=["HS256"], options={"verify_exp": True})
+        except jwt.ExpiredSignatureError:
+            print(f"[ERROR] Token expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired. Please login again."
+            )
+        except jwt.InvalidSignatureError as e:
+            # This means the secret doesn't match
+            print(f"[ERROR] JWT signature invalid - secret mismatch")
+            print(f"[DEBUG] Using secret: {secret[:10]}... (truncated)")
+            print(f"[DEBUG] Token was signed with different secret")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token signature"
+            )
+        except jwt.InvalidTokenError as e:
+            # More detailed error for debugging
+            print(f"[ERROR] JWT decode failed: {e}")
+            print(f"[DEBUG] Error type: {type(e).__name__}")
+            print(f"[DEBUG] Using secret: {secret[:10]}... (truncated)")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token"
+            )
         
         # Extract user identifiers from token
         user_email = decoded.get("email") or decoded.get("userEmail")
@@ -66,17 +125,13 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
             "user_key": user_email or user_id  # Use email as primary key, fallback to user_id
         }
         
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired"
-        )
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
+    except HTTPException:
+        # Re-raise HTTP exceptions (already handled above)
+        raise
     except Exception as e:
+        # Log the error for debugging
+        print(f"[ERROR] Authentication error: {str(e)}")
+        print(f"[DEBUG] Error type: {type(e).__name__}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Authentication error: {str(e)}"

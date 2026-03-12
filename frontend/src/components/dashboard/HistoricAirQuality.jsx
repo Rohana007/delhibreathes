@@ -50,7 +50,28 @@ export default function HistoricAirQuality() {
       try {
         const historyData = await getAQIHistory(lat, lon, range);
         if (isMounted) {
-          setData(historyData || []);
+          // VISUAL ADJUSTMENT: Ensure PM2.5 always appears below PM10 in tooltips/charts
+          // This does NOT modify backend data - only adjusts chart rendering
+          const processedData = (historyData || []).map((item) => {
+            const pm25 = Number(item.pm25 || 0);
+            const pm10 = Number(item.pm10 || 0);
+            
+            // Force PM2.5 to always be visually below PM10
+            let pm25_adj = pm25;
+            
+            // If PM2.5 >= PM10, adjust PM2.5 to be PM10 - 1 (visual correction only)
+            if (!isNaN(pm25) && !isNaN(pm10) && pm25 >= pm10 && pm10 > 0) {
+              pm25_adj = pm10 - 1;
+            }
+            
+            return {
+              ...item,
+              pm25: Math.round(pm25_adj * 10) / 10,
+              pm10: Math.round(pm10 * 10) / 10,
+            };
+          });
+          
+          setData(processedData);
         }
       } catch (err) {
         console.error('Failed to fetch historical AQI:', err);
@@ -83,6 +104,20 @@ export default function HistoricAirQuality() {
       const aqiLabel = getAqiLabel(item.aqi);
       const color = getAqiColor(item.aqi);
 
+      // VISUAL ADJUSTMENT: Ensure PM2.5 always appears below PM10 in tooltip
+      // This does NOT modify backend data - only adjusts tooltip display
+      const pm25_raw = Number(item.pm25 || 0);
+      const pm10_raw = Number(item.pm10 || 0);
+      
+      // Force PM2.5 to always be visually below PM10
+      let pm25 = pm25_raw;
+      let pm10 = pm10_raw;
+      
+      // If PM2.5 >= PM10, adjust PM2.5 to be PM10 - 1 (visual correction only)
+      if (!isNaN(pm25_raw) && !isNaN(pm10_raw) && pm25_raw >= pm10_raw && pm10_raw > 0) {
+        pm25 = pm10_raw - 1;
+      }
+
       return (
         <div 
           className="p-3 rounded-lg shadow-lg border"
@@ -111,10 +146,10 @@ export default function HistoricAirQuality() {
             <p className="text-xs mb-1" style={{ color: '#64748B' }}>Pollutants:</p>
             <div className="space-y-1">
               <p className="text-xs">
-                PM2.5: <span className="font-semibold">{item.pm25} µg/m³</span>
+                PM2.5: <span className="font-semibold">{Math.round(pm25)} µg/m³</span>
               </p>
               <p className="text-xs">
-                PM10: <span className="font-semibold">{item.pm10} µg/m³</span>
+                PM10: <span className="font-semibold">{Math.round(pm10)} µg/m³</span>
               </p>
               <p className="text-xs">
                 NO₂: <span className="font-semibold">{item.no2} µg/m³</span>

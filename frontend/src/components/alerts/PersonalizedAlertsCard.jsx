@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, BellOff, CheckCircle, Loader2, Settings } from 'lucide-react';
+import { Bell, BellOff, CheckCircle, Loader2, Settings, AlertTriangle } from 'lucide-react';
 import AlertSettingsModal from './AlertSettingsModal';
-import { disableAlerts, getAlertsStatus, toggleAlerts } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import { useAqiForecast } from '../../hooks/useAqiForecast';
+import { generateAlerts, ALERTS_UPDATED_EVENT } from '@/utils/alertsEngine';
 import './PersonalizedAlertsCard.css';
 
 const HEALTH_CATEGORY_LABELS = {
@@ -46,91 +46,70 @@ export default function PersonalizedAlertsCard() {
   const currentAQI = regionData?.aqi || ncrAqi?.summary?.averageAqi || null;
   const { expectedChange6h, trendDirection } = useAqiForecast(currentAQI, selectedRegion);
 
-  // Calculate recent alerts
-  const recentAlerts = useMemo(() => {
-    if (!isAlertsEnabled || !currentAQI) return [];
-    
-    const alerts = [];
-    
-    // Check threshold crossing
-    if (currentAQI >= alertThreshold) {
-      const aqiLabel = currentAQI >= 300 ? 'Hazardous' : 
-                      currentAQI >= 200 ? 'Very Unhealthy' :
-                      currentAQI >= 150 ? 'Unhealthy' : 'Moderate';
-      alerts.push(`AQI in ${region || 'your region'} is now ${aqiLabel} (${currentAQI})`);
-    }
-    
-    // Check forecast trend
-    if (expectedChange6h && expectedChange6h > 30) {
-      alerts.push(`AQI rising by +${expectedChange6h} expected in next 6 hours`);
-    }
-    
-    // Health category specific alerts
-    if (healthCategory === 'child' && currentAQI >= 75) {
-      alerts.push(`Child health category: Limit outdoor exposure (AQI: ${currentAQI})`);
-    } else if (healthCategory === 'elderly' && currentAQI >= 100) {
-      alerts.push(`Elderly health category: Avoid outdoor activities (AQI: ${currentAQI})`);
-    } else if (healthCategory === 'pregnant' && currentAQI >= 100) {
-      alerts.push(`Pregnant health category: Limit outdoor exposure (AQI: ${currentAQI})`);
-    }
-    
-    return alerts.slice(0, 2); // Return latest 1-2 alerts
-  }, [isAlertsEnabled, currentAQI, alertThreshold, healthCategory, region, expectedChange6h]);
+  // State for generated alerts (can be updated instantly)
+  const [generatedAlerts, setGeneratedAlerts] = useState([]);
 
-  // Check for existing alerts status
+  // Generate alerts using frontend-only alert engine
   useEffect(() => {
-    fetchAlertsStatus();
+    if (!isAlertsEnabled || !currentAQI || currentAQI === null) {
+      setGeneratedAlerts([]);
+      return;
+    }
+    const alerts = generateAlerts(currentAQI, healthCategory, region || 'Delhi');
+    setGeneratedAlerts(alerts);
+  }, [isAlertsEnabled, currentAQI, healthCategory, region]);
+
+  // Listen for force update events - triggers instant alert refresh
+  useEffect(() => {
+    function handleForceUpdate(event) {
+      if (event.detail && event.detail.force === true) {
+        // Refresh alerts instantly (bypass any debounce/timing)
+        if (!isAlertsEnabled || !currentAQI || currentAQI === null) {
+          setGeneratedAlerts([]);
+          return;
+        }
+        // Generate alerts immediately without waiting
+        const alerts = generateAlerts(currentAQI, healthCategory, region || 'Delhi');
+        setGeneratedAlerts(alerts);
+      }
+    }
+    
+    window.addEventListener(ALERTS_UPDATED_EVENT, handleForceUpdate);
+    return () => window.removeEventListener(ALERTS_UPDATED_EVENT, handleForceUpdate);
+  }, [isAlertsEnabled, currentAQI, healthCategory, region]);
+  
+  // Get latest 3 alerts for display
+  const recentAlerts = useMemo(() => {
+    return generatedAlerts.slice(0, 3).map(alert => alert.message);
+  }, [generatedAlerts]);
+
+  // Load alerts status from localStorage
+  useEffect(() => {
+    loadAlertsFromStorage();
   }, []);
 
-  // Fetch alerts status from FastAPI
-  const fetchAlertsStatus = async () => {
+  // Load alerts preferences from localStorage (no API call)
+  const loadAlertsFromStorage = () => {
     setCheckingStatus(true);
     
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setCheckingStatus(false);
-        return;
-      }
-
-      const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000';
-      
-      const response = await fetch(`${FASTAPI_BASE}/user/alerts/status`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.warn('Gamification server not running. Alerts feature unavailable.');
-          setIsAlertsEnabled(false);
-          setCheckingStatus(false);
-          return;
-        }
-        throw new Error(`Failed to fetch alerts status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      // Handle response (may or may not have success field)
-      if (data && (data.success !== false)) {
-        setIsAlertsEnabled(data.alerts_enabled || false);
-        if (data.region) {
-          setRegion(data.region);
-        }
-        if (data.health_category) {
-          const category = data.health_category;
+      const saved = localStorage.getItem('personalized_alerts');
+      if (saved) {
+        const alertsData = JSON.parse(saved);
+        if (alertsData.enabled) {
+          setIsAlertsEnabled(true);
+          setRegion(alertsData.region || 'Delhi');
+          const category = alertsData.healthCategory || 'normal';
           setHealthCategory(category);
           setAlertThreshold(AQI_THRESHOLDS[category] || 150);
+        } else {
+          setIsAlertsEnabled(false);
         }
+      } else {
+        setIsAlertsEnabled(false);
       }
     } catch (err) {
-      console.error('Error fetching alerts status:', err);
-      if (err.message && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('ERR_CONNECTION_REFUSED'))) {
-        console.warn('Backend is offline or unreachable. Please start the FastAPI server on port 8000.');
-      }
+      // Invalid data in localStorage, treat as disabled
       setIsAlertsEnabled(false);
     } finally {
       setCheckingStatus(false);
@@ -144,8 +123,8 @@ export default function PersonalizedAlertsCard() {
   };
 
   // Handle save from settings modal
-  // This callback is called by AlertSettingsModal after successful API call
-  const handleSaveSettings = async ({ healthCategory, region }) => {
+  // This callback is called by AlertSettingsModal after saving to localStorage
+  const handleSaveSettings = ({ healthCategory, region }) => {
     // Update local state immediately
     setIsAlertsEnabled(true);
     setRegion(region);
@@ -153,8 +132,8 @@ export default function PersonalizedAlertsCard() {
     setAlertThreshold(AQI_THRESHOLDS[healthCategory] || 150);
     setError('');
     
-    // Refresh status from server to ensure consistency
-    await fetchAlertsStatus();
+    // Refresh status from localStorage to ensure consistency
+    loadAlertsFromStorage();
   };
 
   // Handle toggle OFF
@@ -162,43 +141,41 @@ export default function PersonalizedAlertsCard() {
     setShowConfirmDisable(true);
   };
 
-  // Confirm disable action
-  const confirmDisable = async () => {
+  // Confirm disable action - save to localStorage (no API call)
+  const confirmDisable = () => {
     setShowConfirmDisable(false);
     setLoading(true);
     setError('');
 
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Please login first');
-        setLoading(false);
-        return;
+      // Get user's email from localStorage
+      let email = null;
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          email = user.email || user.userEmail || null;
+        } catch (e) {
+          // Invalid JSON
+        }
+      }
+      if (!email) {
+        email = localStorage.getItem('email');
       }
 
-      const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000';
+      // Save disabled state to localStorage
+      const alertsData = {
+        email: email || 'unknown',
+        region: region || 'Delhi',
+        healthCategory: healthCategory || 'normal',
+        enabled: false,
+      };
       
-      const response = await fetch(`${FASTAPI_BASE}/user/alerts/disable`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      
-      if (data.success && !data.alerts_enabled) {
-        setIsAlertsEnabled(false);
-      } else {
-        throw new Error(data.detail || 'Failed to disable alerts');
-      }
+      localStorage.setItem('personalized_alerts', JSON.stringify(alertsData));
+      setIsAlertsEnabled(false);
+      setError('');
     } catch (err) {
-      console.error('Error disabling alerts:', err);
-      if (err.message && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('ERR_CONNECTION_REFUSED'))) {
-        setError('Backend is offline or unreachable. Please start the FastAPI server on port 8000.');
-      } else {
-        setError(err.message || 'Failed to disable alerts');
-      }
+      setError('Unable to disable alerts');
     } finally {
       setLoading(false);
     }
@@ -271,18 +248,38 @@ export default function PersonalizedAlertsCard() {
               </p>
               
               {/* Recent Alerts Section */}
-              {recentAlerts.length > 0 && (
+              {generatedAlerts.length > 0 ? (
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: '#E2E8F0' }}>
-                  <p className="text-xs font-semibold mb-2" style={{ color: '#0F172A' }} data-translate="Recent Alerts:">
-                    Recent Alerts:
+                  <p className="text-xs font-semibold mb-2" style={{ color: '#0F172A' }} data-translate="Active Alerts:">
+                    Active Alerts:
                   </p>
-                  <ul className="space-y-1">
-                    {recentAlerts.map((alert, index) => (
-                      <li key={index} className="text-xs" style={{ color: '#64748B' }}>
-                        • {alert}
+                  <ul className="space-y-2">
+                    {generatedAlerts.slice(0, 3).map((alert, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <AlertTriangle 
+                          className="w-4 h-4 mt-0.5 flex-shrink-0" 
+                          style={{ 
+                            color: alert.severity === 'danger' ? '#DC2626' : 
+                                   alert.severity === 'warning' ? '#F59E0B' : '#3B82F6' 
+                          }} 
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium" style={{ color: '#0F172A' }}>
+                            {alert.title}
+                          </p>
+                          <p className="text-xs" style={{ color: '#64748B' }}>
+                            {alert.message}
+                          </p>
+                        </div>
                       </li>
                     ))}
                   </ul>
+                </div>
+              ) : (
+                <div className="mt-4 pt-4 border-t" style={{ borderColor: '#E2E8F0' }}>
+                  <p className="text-xs" style={{ color: '#64748B' }} data-translate="Air quality is normal for your region.">
+                    Air quality is normal for your region.
+                  </p>
                 </div>
               )}
             </div>

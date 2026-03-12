@@ -871,3 +871,13 @@ body[dir="rtl"] * {
 .lang-option:hover {
   background: #f3f3f3;
 }
+
+/* ============================================
+   FEATURE FLAG HIDING (NO LAYOUT SHIFT)
+   ============================================ */
+.hidden-feature {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

@@ -135,55 +135,57 @@ export default function PolicyOverview() {
       </div>
 
       {/* Reports Button */}
-      <motion.div
-        className="mt-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        <button
-          onClick={() => navigate('/policy-dashboard/reports')}
-          className="w-full flex items-center justify-between p-5 rounded-xl border transition-all hover:shadow-xl hover:scale-[1.02]"
-          style={{
-            background: theme === 'dark' 
-              ? 'linear-gradient(135deg, #1E293B 0%, #334155 100%)'
-              : 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)',
-            borderColor: theme === 'dark' ? '#475569' : 'rgba(0, 0, 0, 0.2)',
-            color: theme === 'dark' ? '#F3F4F6' : '#1A1A1A',
-            boxShadow: theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.1)',
-          }}
+      {false && (
+        <motion.div
+          className="mt-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
         >
-          <div className="flex items-center gap-4">
-            <div 
-              className="p-3 rounded-lg transition-colors"
-              style={{ backgroundColor: theme === 'dark' ? '#475569' : 'rgba(0, 0, 0, 0.05)' }}
-            >
-              <FileText 
-                className="w-6 h-6 transition-colors"
-                style={{ color: theme === 'dark' ? '#E5E7EB' : 'rgba(0, 0, 0, 0.7)' }}
-              />
-            </div>
-            <div className="text-left">
-              <p 
-                className="font-bold text-lg transition-colors"
-                style={{ color: theme === 'dark' ? '#F3F4F6' : 'rgba(0, 0, 0, 0.8)' }}
+          <button
+            onClick={() => navigate('/policy-dashboard/reports')}
+            className="w-full flex items-center justify-between p-5 rounded-xl border transition-all hover:shadow-xl hover:scale-[1.02]"
+            style={{
+              background: theme === 'dark' 
+                ? 'linear-gradient(135deg, #1E293B 0%, #334155 100%)'
+                : 'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)',
+              borderColor: theme === 'dark' ? '#475569' : 'rgba(0, 0, 0, 0.2)',
+              color: theme === 'dark' ? '#F3F4F6' : '#1A1A1A',
+              boxShadow: theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div 
+                className="p-3 rounded-lg transition-colors"
+                style={{ backgroundColor: theme === 'dark' ? '#475569' : 'rgba(0, 0, 0, 0.05)' }}
               >
-                View Pollution Reports
-              </p>
-              <p 
-                className="text-sm mt-1 transition-colors"
-                style={{ color: theme === 'dark' ? '#D1D5DB' : 'rgba(0, 0, 0, 0.6)' }}
-              >
-                Manage and review citizen-submitted pollution reports
-              </p>
+                <FileText 
+                  className="w-6 h-6 transition-colors"
+                  style={{ color: theme === 'dark' ? '#E5E7EB' : 'rgba(0, 0, 0, 0.7)' }}
+                />
+              </div>
+              <div className="text-left">
+                <p 
+                  className="font-bold text-lg transition-colors"
+                  style={{ color: theme === 'dark' ? '#F3F4F6' : 'rgba(0, 0, 0, 0.8)' }}
+                >
+                  View Pollution Reports
+                </p>
+                <p 
+                  className="text-sm mt-1 transition-colors"
+                  style={{ color: theme === 'dark' ? '#D1D5DB' : 'rgba(0, 0, 0, 0.6)' }}
+                >
+                  Manage and review citizen-submitted pollution reports
+                </p>
+              </div>
             </div>
-          </div>
-          <ArrowRight 
-            className="w-6 h-6 transition-colors"
-            style={{ color: theme === 'dark' ? '#E5E7EB' : 'rgba(0, 0, 0, 0.7)' }}
-          />
-        </button>
-      </motion.div>
+            <ArrowRight 
+              className="w-6 h-6 transition-colors"
+              style={{ color: theme === 'dark' ? '#E5E7EB' : 'rgba(0, 0, 0, 0.7)' }}
+            />
+          </button>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

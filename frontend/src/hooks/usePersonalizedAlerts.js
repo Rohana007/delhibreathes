@@ -12,7 +12,7 @@ const AQI_THRESHOLDS = {
 };
 
 /**
- * Hook to fetch and manage personalized alert settings
+ * Hook to fetch and manage personalized alert settings from localStorage
  * Returns alert status, settings, and helper functions
  */
 export function usePersonalizedAlerts() {
@@ -23,52 +23,30 @@ export function usePersonalizedAlerts() {
   const [alertThreshold, setAlertThreshold] = useState(150);
 
   useEffect(() => {
-    fetchAlertsStatus();
+    loadAlertsFromStorage();
   }, []);
 
-  const fetchAlertsStatus = async () => {
+  const loadAlertsFromStorage = () => {
     setLoading(true);
     
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000';
-      
-      const response = await fetch(`${FASTAPI_BASE}/user/alerts/status`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setIsAlertsEnabled(false);
-          setLoading(false);
-          return;
-        }
-        throw new Error(`Failed to fetch alerts status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data && (data.success !== false)) {
-        setIsAlertsEnabled(data.alerts_enabled || false);
-        if (data.region) {
-          setRegion(data.region);
-        }
-        if (data.health_category) {
-          const category = data.health_category;
+      const saved = localStorage.getItem('personalized_alerts');
+      if (saved) {
+        const alertsData = JSON.parse(saved);
+        if (alertsData.enabled) {
+          setIsAlertsEnabled(true);
+          setRegion(alertsData.region || 'Delhi');
+          const category = alertsData.healthCategory || 'normal';
           setHealthCategory(category);
           setAlertThreshold(AQI_THRESHOLDS[category] || 150);
+        } else {
+          setIsAlertsEnabled(false);
         }
+      } else {
+        setIsAlertsEnabled(false);
       }
     } catch (err) {
-      console.error('Error fetching alerts status:', err);
+      // Invalid data in localStorage, treat as disabled
       setIsAlertsEnabled(false);
     } finally {
       setLoading(false);
@@ -81,7 +59,7 @@ export function usePersonalizedAlerts() {
     healthCategory,
     alertThreshold,
     loading,
-    refetch: fetchAlertsStatus,
+    refetch: loadAlertsFromStorage,
   };
 }
 

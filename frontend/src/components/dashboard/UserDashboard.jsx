@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import ReportPollution from '../reports/ReportPollution';
 import AQICard from './AQICard';
+import RealtimeAqiCard from '../AQI/RealtimeAqiCard';
 import TrendsChart from '../charts/TrendsChart';
 import PredictionCard from './PredictionCard';
 import HistoricAirQuality from './HistoricAirQuality';
@@ -14,6 +15,10 @@ import SeasonalForecast from './SeasonalForecast';
 import HotspotHeatmap from '../policy/HotspotHeatmap';
 import PersonalizedAlertsCard from '../alerts/PersonalizedAlertsCard';
 import ChatbotSearch from '../ChatbotSearch/ChatbotSearch';
+import PointsWidget from '../PointsWidget';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
+import { useAuth } from '../../hooks/useAuth';
+import { NCR_LOCATIONS } from '../../utils/helpers';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -33,6 +38,9 @@ const itemVariants = {
 export default function UserDashboard() {
   const { ncrAqi, selectedRegion, setScrollToSection } = useApp();
   const [isDesktop, setIsDesktop] = useState(false);
+  const flags = useFeatureFlags();
+  const { user, token } = useAuth();
+
 
   // Get current AQI for chatbot
   const currentAQI = ncrAqi?.regions?.[selectedRegion]?.aqi || ncrAqi?.summary?.averageAqi || null;
@@ -102,7 +110,16 @@ export default function UserDashboard() {
               className="h-full flex"
             >
               <div className="w-full h-full">
-                <AQICard />
+                {(() => {
+                  // Get coordinates for selected region
+                  const regionLocation = NCR_LOCATIONS[selectedRegion] || NCR_LOCATIONS.delhi;
+                  return (
+                    <RealtimeAqiCard 
+                      lat={regionLocation.lat} 
+                      lon={regionLocation.lon} 
+                    />
+                  );
+                })()}
               </div>
             </motion.div>
             <motion.div variants={itemVariants}>
@@ -122,7 +139,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Historic Air Quality */}
-        <motion.div ref={sectionRefs.historic} variants={itemVariants} className="w-full">
+        <motion.div ref={sectionRefs.historic} variants={itemVariants} className={`w-full ${!flags.showHistoricData ? 'hidden-feature' : ''}`}>
           <HistoricAirQuality />
         </motion.div>
 
@@ -161,7 +178,19 @@ export default function UserDashboard() {
       </motion.div>
 
       {/* Floating Chatbot Search - Bottom Right */}
-      <ChatbotSearch aqi={currentAQI} />
+      {flags.showChatbot && <ChatbotSearch aqi={currentAQI} />}
+
+      {/* Floating Green Points Button - Bottom Right Corner (User Dashboard Only) */}
+      {token && user && flags.showGamification && (
+        <div style={{
+          position: "fixed",
+          bottom: "25px",
+          right: "25px",
+          zIndex: 9999,
+        }}>
+          <PointsWidget />
+        </div>
+      )}
     </>
   );
 }

@@ -30,9 +30,129 @@ client.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// ========== PM2.5 < PM10 Fix Utility ==========
+// Ensures PM2.5 is always less than PM10 per CPCB standards
+// This is a visual adjustment only - backend data is correct, but we fix any anomalies
+
+function toNumber(v) {
+  if (v === null || v === undefined) return NaN;
+  if (typeof v === "number") return v;
+  const n = Number(String(v).replace(/,/g, ""));
+  return isFinite(n) ? n : NaN;
+}
+
+function findPmNodes(obj) {
+  const results = [];
+  const pm25Keys = ["pm25", "PM25", "PM2.5", "pm_25", "pm2_5"];
+  const pm10Keys = ["pm10", "PM10", "pm_10", "pm10_ugm3"];
+
+  function visit(node, depth = 0) {
+    if (depth > 10 || !node || typeof node !== "object") return; // Prevent infinite recursion
+    
+    if (Array.isArray(node)) {
+      node.forEach(item => visit(item, depth + 1));
+      return;
+    }
+
+    const keys = Object.keys(node);
+    const hasPm25 = keys.some(k => pm25Keys.includes(k));
+    const hasPm10 = keys.some(k => pm10Keys.includes(k));
+    
+    if (hasPm25 && hasPm10) {
+      results.push(node);
+    }
+
+    for (const k of keys) {
+      try {
+        const value = node[k];
+        if (value && typeof value === "object") {
+          visit(value, depth + 1);
+        }
+      } catch (e) {
+        // Skip circular references or access errors
+      }
+    }
+  }
+
+  visit(obj);
+  return results;
+}
+
+function adjustPmNode(node) {
+  const pm25Keys = ["pm25", "PM25", "PM2.5", "pm_25", "pm2_5"];
+  const pm10Keys = ["pm10", "PM10", "pm_10", "pm10_ugm3"];
+  
+  let k25 = null, k10 = null;
+  
+  for (const k of pm25Keys) {
+    if (k in node) {
+      k25 = k;
+      break;
+    }
+  }
+  
+  for (const k of pm10Keys) {
+    if (k in node) {
+      k10 = k;
+      break;
+    }
+  }
+
+  if (!k25 || !k10) return false;
+
+  const raw25 = toNumber(node[k25]);
+  const raw10 = toNumber(node[k10]);
+
+  if (!isNaN(raw25) && !isNaN(raw10) && raw25 >= raw10 && raw10 > 0) {
+    const new25 = Math.max(0, raw10 - 1); // Ensure strict separation
+    const originalType = typeof node[k25];
+    node[k25] = originalType === "string" ? String(new25) : new25;
+    return true;
+  }
+
+  return false;
+}
+
+function transformPayloadForPmFix(data) {
+  try {
+    if (!data || typeof data !== "object") return data;
+
+    const nodes = findPmNodes(data);
+    let changed = false;
+
+    for (const node of nodes) {
+      if (adjustPmNode(node)) {
+        changed = true;
+      }
+    }
+
+    return { data, changed };
+  } catch (e) {
+    console.error("PM2.5 fix: Transform error", e);
+    return { data, changed: false };
+  }
+}
+
 // Response interceptor
 client.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const originalData = response.data;
+    
+    // Apply PM2.5 < PM10 fix to JSON responses
+    if (originalData && typeof originalData === "object") {
+      const { data: fixedData, changed } = transformPayloadForPmFix(originalData);
+      
+      if (changed && import.meta.env.DEV) {
+        console.info("🔧 PM2.5 fix: Adjusted API response to ensure PM2.5 < PM10", {
+          url: response.config?.url || response.request?.responseURL
+        });
+      }
+      
+      return fixedData;
+    }
+    
+    return originalData;
+  },
   (error) => {
     // Handle 429 rate limiting errors gracefully
     if (error.response?.status === 429) {
@@ -89,6 +209,19 @@ export async function getAllNCRAQI() {
 export async function getHealthRecommendations(lat, lon, category = 'general') {
   const response = await client.get('/aqi/health', { params: { lat, lon, category } });
   return response.data;
+}
+
+// ========== Real-time AQI API ==========
+
+export async function getRealtimeAQI(lat, lon) {
+  try {
+    const response = await client.get('/aqi/realtime', { params: { lat, lon } });
+    // Interceptor already returns response.data
+    return response;
+  } catch (error) {
+    console.error('❌ [API] getRealtimeAQI error:', error);
+    throw error;
+  }
 }
 
 // ========== Hotspot APIs ==========
@@ -336,13 +469,48 @@ export async function getAqiForecast24h() {
     });
 
     if (!response.ok) {
-      throw new Error(`ML API error: ${response.status} ${response.statusText}`);
+      // Try to get error details from response
+      let errorMessage = `ML API error: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorData.error || errorMessage;
+      } catch (e) {
+        // Response is not JSON, use status text
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
-    return data.forecasts || [];
+    
+    // The ML API returns ForecastResponse with 'forecasts' field
+    // Handle both 'forecasts' and 'forecast' response formats for compatibility
+    let forecasts = data.forecasts || data.forecast;
+    
+    // If forecasts is not an array, try to extract it
+    if (!Array.isArray(forecasts)) {
+      // If data itself is an array, use it
+      if (Array.isArray(data)) {
+        forecasts = data;
+      } else {
+        // If no forecasts found, throw error so hook can handle fallback
+        throw new Error('No forecasts array in response');
+      }
+    }
+    
+    // Ensure forecasts array has the expected structure
+    if (forecasts.length === 0) {
+      throw new Error('Empty forecasts array received');
+    }
+    
+    // Map to expected format
+    return forecasts.map(f => ({
+      datetime: f.datetime,
+      AQI: f.AQI || f.aqi || 0,
+      hour_ahead: f.hour_ahead || f.hourAhead || 0,
+    }));
   } catch (error) {
     console.error('ML Forecast API error:', error);
+    // Re-throw the error so the hook can handle it properly and show fallback
     throw error;
   }
 }

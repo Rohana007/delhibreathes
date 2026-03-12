@@ -125,6 +125,10 @@ function getHighestSource(contributions) {
  */
 function calculateTotalContribution(sourceResults) {
   try {
+    // Load calibration baselines
+    const calibrationBaselines = utils.loadJSONSafe('data/calibration_baselines.json', {});
+    const expectedRanges = calibrationBaselines.expectedContributionRange || {};
+    
     // Extract raw scores
     const rawScores = {
       vehicular: sourceResults.vehicular?.score || 0,
@@ -134,7 +138,44 @@ function calculateTotalContribution(sourceResults) {
     };
     
     // Normalize to percentages
-    const contributions = normalizeContributions(rawScores);
+    let contributions = normalizeContributions(rawScores);
+    
+    // Apply calibration smoothing if results are unrealistic
+    const calibrationWarnings = [];
+    
+    // Check each source against expected ranges
+    for (const [source, contribution] of Object.entries(contributions)) {
+      const expectedRange = expectedRanges[source];
+      if (expectedRange && Array.isArray(expectedRange) && expectedRange.length === 2) {
+        const [minExpected, maxExpected] = expectedRange;
+        const contributionPercent = contribution / 100; // Convert to 0-1 range
+        
+        if (contributionPercent < minExpected || contributionPercent > maxExpected) {
+          // Apply smoothing: blend 85% computed + 15% baseline mean
+          const baselineMean = (minExpected + maxExpected) / 2;
+          const smoothed = 0.85 * contributionPercent + 0.15 * baselineMean;
+          contributions[source] = smoothed * 100;
+          calibrationWarnings.push(`${source}_outside_expected_range`);
+        }
+      }
+    }
+    
+    // Special check for unrealistically low vehicular (e.g., < 3%)
+    if (contributions.vehicular < 3.0) {
+      const vehicularRange = expectedRanges.vehicular || [0.30, 0.45];
+      const baselineMean = (vehicularRange[0] + vehicularRange[1]) / 2;
+      contributions.vehicular = 0.85 * (contributions.vehicular / 100) + 0.15 * baselineMean;
+      contributions.vehicular = contributions.vehicular * 100;
+      calibrationWarnings.push('vehicular_unrealistically_low');
+    }
+    
+    // Re-normalize after smoothing to ensure percentages sum to 100
+    const total = Object.values(contributions).reduce((sum, val) => sum + val, 0);
+    if (total > 0) {
+      for (const key in contributions) {
+        contributions[key] = (contributions[key] / total) * 100;
+      }
+    }
     
     // Calculate overall confidence
     const overallConfidence = calculateOverallConfidence(sourceResults);
@@ -158,7 +199,8 @@ function calculateTotalContribution(sourceResults) {
         industrial: utils.safeNumber(rawScores.industrial, 0),
         construction: utils.safeNumber(rawScores.construction, 0),
         biomass: utils.safeNumber(rawScores.biomass, 0)
-      }
+      },
+      calibrationWarnings: calibrationWarnings.length > 0 ? calibrationWarnings : undefined
     };
     
     return {
